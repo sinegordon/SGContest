@@ -1,0 +1,8 @@
+requests
+gunicorn
+falcon
+pymongo
+redis
+oauthlib
+requests_oauthlib
+resource
