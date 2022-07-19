@@ -28,7 +28,7 @@ class Processor(BaseProcessor):
             need_keys = ('id', 'mqtt_key', 'user', 'language', 'course', 'problem', 'variant', 'code')
             if not all(k in message for k in need_keys):
                 return None
-            pr = message['problem']
+            pr = int(message['problem'])
             var = message['variant']
             code = message['code']
             fname = message["user"]
