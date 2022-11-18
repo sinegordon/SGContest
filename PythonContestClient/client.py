@@ -16,7 +16,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         mqtt_key = '123'
         user = self.edit_name.text()
         language = self.edit_language.text()
-        course = 'na'
+        course = 'programming'
         problem = str(self.spin_problem.value())
         variant = str(self.spin_variant.value())
         code = self.text_code.toPlainText()
