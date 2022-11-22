@@ -12,6 +12,13 @@
             "languages": {
                 "python3": "python"
             }
+        },
+        "add_to_base_processor": {
+            "type": "add_to_base_processor",
+            "mongo_host": "mongo",
+            "mongo_port": 27017,
+            "mongo_db_courses": "courses",
+            "mongo_db_messages": "messages"
         }
     }
 }
