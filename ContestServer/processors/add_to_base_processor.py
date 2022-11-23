@@ -21,10 +21,10 @@ class Processor(BaseProcessor):
             config = self.config
 
         try:
-            need_keys = ('id', 'mqtt_key', 'user', 'type', 'course', 'problem', 'variant', 'tests')
+            need_keys = ('id', 'mqtt_key', 'user', 'type', 'course', 'problem', 'variant', 'tests', "action")
             if not all(k in message for k in need_keys):
                 return None
-            if message['id'] != 'add_problem':
+            if message['action'] != 'add_problem':
                 return None
             pr = int(message['problem'])
             var = message['variant']
@@ -34,12 +34,18 @@ class Processor(BaseProcessor):
                 print(f"Course - {collection}")
                 problem_config = list(collection.find({'problem': pr}))
                 print(f"Problem - {problem_config}")
+                # Обновление или новая задача
                 insert_key = False;
                 if len(problem_config) == 0:
                     problem_dict = {}
                     insert_key = True        
                 else:
                     problem_dict = problem_config[0]
+                # Обновляем или вставляем условие задачи
+                if "task" in message:
+                    problem_dict["task"] = message["task"]
+                elif "task" not in problem_dict:
+                    problem_dict["task"] = "No task"                    
                 if not insert_key:
                     problem_dict["variants"][var] = message["tests"]
                     collection.update_one({
@@ -47,6 +53,7 @@ class Processor(BaseProcessor):
                         },
                         {
                         "$set": {
+                            "task": problem_dict["task"],
                             "variants": problem_dict["variants"]
                         }
                         }, upsert=False)
@@ -60,7 +67,15 @@ class Processor(BaseProcessor):
             except Exception as e:
                 self.log(f'Process error: {str(e)}')
                 return None
-            return problem_dict
+            collection_date = datetime.today().strftime('%Y-%m-%d')
+            # Select problem collection
+            collection = self.db_messages[f'{collection_date}']
+            json_data = {'message': message, 'result': problem_dict}
+            self.log(f'Save to MongoDB: {json_data}.')
+            transaction_id = collection.insert_one(json_data).inserted_id
+            self.log(f'MongoDB response: {transaction_id}.')
+            del json_data['_id']
+            return json_data
         except Exception as err:
             self.log(f'Process error: {str(err)}')
             return None
