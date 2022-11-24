@@ -107,8 +107,6 @@ class Worker(Dispatcher):
                 res = p.process(message, self.config)
                 if not res is None:
                     self.results[res['message']['id']] = res
-                else:
-                    self.results[message['id']] = {"message": message, "result": "Unknown error!"}
             except Exception as err:
                 print(p.name, err)
 

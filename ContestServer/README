@@ -69,7 +69,7 @@ print(int(input()) + 1)
 import requests
 json = {
         "id": "12345", 
-        "mqtt_key": 123, 
+        "mqtt_key": 123,
         "user": "aasdd", 
         "type": "equal", 
         "course": "programming", 

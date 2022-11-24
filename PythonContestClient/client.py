@@ -3,6 +3,8 @@ from PyQt5 import QtWidgets
 import design
 import uuid
 import requests
+import aiohttp
+import asyncio
 import time
 
 class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
@@ -11,7 +13,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.push_code.clicked.connect(self.select_file)
     
-    def check_problem(self):
+    
+    async def check_problem(self):
         id = str(uuid.uuid4())
         mqtt_key = '123'
         user = self.edit_name.text()
@@ -27,19 +30,20 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.text_code.setPlainText("Не удалось отправить задачу")
             return
         self.statusbar.showMessage("Задача успешно отправлена. Ожидаем проверки.")
-        time.sleep(3)
+        message = {'id': id}
         flag = True
         count = 0
         while flag:
             count += 1
-            self.statusbar.showMessage(f"Попытка проверки №{count}.")
-            message = {'id': id}
-            resp = requests.post('http://localhost:8000/api/get_message_result', json=message)
-            if 'error' not in resp.json():
-                self.text_code.setPlainText(f"Задача проверена.\nРезультат:\n{resp.json()}")
-                self.statusbar.showMessage("")
-                return
-            time.sleep(3)
+            self.text_code.setPlainText(f"Выполняется попытка №{count}.")
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f'http://localhost:8000/api/get_message_result', json=message) as resp:
+                    result = await resp.json()
+                if 'error' not in result:
+                    self.text_code.setPlainText(f"Задача проверена.\nРезультат:\n{result}")
+                    self.statusbar.showMessage("")
+                    break
+            time.sleep(1)
 
     
     def select_file(self):
@@ -48,7 +52,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             return
         with open(file_name, 'r') as f:
             self.text_code.setPlainText(f.read())
-        self.check_problem()
+        asyncio.run(self.check_problem())
 
 
 
