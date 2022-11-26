@@ -21,14 +21,26 @@ class Processor(BaseProcessor):
             config = self.config
 
         try:
-            need_keys = ('id', 'mqtt_key', 'user', 'type', 'action')
+            need_keys = ('id', 'mqtt_key', 'user', 'type', 'data_key', 'action')
             data_dict = {}
             if not all(k in message for k in need_keys):
                 return None
             if message['action'] != 'get_data':
                 return None
             try:
-                data_dict = self.db_courses.command('listCollections')
+                l = []
+                if message['type'] == 'courses':
+                    ret = self.db_courses.command('listCollections')
+                    print(f"DB All Info - {ret}")
+                    for x in ret['cursor']['firstBatch']:
+                        l.append(x['name'])
+                elif message['type'] == 'problems':
+                    collection = self.db_courses[message['data_key']]
+                    ret = list(collection.find({}))
+                    for x in ret:
+                        l.append({str(x['problem']): list(x['variants'].keys()), "task": x.get("task", "")})
+                data_dict[message["type"]] = l
+                print(f"Data - {data_dict}")
             except Exception as e:
                 self.log(f'Process error: {str(e)}')
                 return None

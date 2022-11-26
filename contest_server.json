@@ -19,6 +19,13 @@
             "mongo_port": 27017,
             "mongo_db_courses": "courses",
             "mongo_db_messages": "messages"
+        },
+        "get_courses_data_processor": {
+            "type": "get_courses_data_processor",
+            "mongo_host": "mongo",
+            "mongo_port": 27017,
+            "mongo_db_courses": "courses",
+            "mongo_db_messages": "messages"
         }
     }
 }
