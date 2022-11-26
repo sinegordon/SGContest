@@ -35,7 +35,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         count = 0
         while flag:
             count += 1
-            self.text_code.setPlainText(f"Выполняется попытка №{count}.")
+            #self.statusbar.showMessage(f"Выполняется попытка №{count}.")
             async with aiohttp.ClientSession() as session:
                 async with session.post(f'http://localhost:8000/api/get_message_result', json=message) as resp:
                     result = await resp.json()
