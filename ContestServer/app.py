@@ -11,14 +11,16 @@ class AddMessageToQueue():
         try:
             resp.body = pool.add_message(json.loads(req.params['json']))
             resp.status = falcon.HTTP_200
-        except:
+        except Exception as err:
             resp.status = falcon.HTTP_500
+            print(f'App error: {str(err)}')
     def on_post(self, req, resp):
         try:
             resp.body = pool.add_message(req.media)
             resp.status = falcon.HTTP_200
-        except:
+        except Exception as err:
             resp.status = falcon.HTTP_500
+            print(f'App error: {str(err)}')
 
 class GetMessageResult():
     '''API method for show tests result'''
@@ -26,14 +28,16 @@ class GetMessageResult():
         try:
             resp.body = pool.get_message_result(json.loads(req.params['json']))
             resp.status = falcon.HTTP_200
-        except:
+        except Exception as err:
             resp.status = falcon.HTTP_500
+            print(f'App error: {str(err)}')
     def on_post(self, req, resp):
         try:
             resp.body = pool.get_message_result(req.media)
             resp.status = falcon.HTTP_200
-        except:
+        except Exception as err:
             resp.status = falcon.HTTP_500
+            print(f'App error: {str(err)}')
 
 # Run API
 api = falcon.API()

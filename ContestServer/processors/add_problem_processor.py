@@ -31,9 +31,7 @@ class Processor(BaseProcessor):
             problem_dict = {}
             try:
                 collection = self.db_courses[message["course"]]
-                print(f"Course - {collection}")
                 problem_config = list(collection.find({'problem': pr}))
-                print(f"Problem - {problem_config}")
                 # Обновление или новая задача
                 insert_key = False;
                 if len(problem_config) == 0:
@@ -70,6 +68,7 @@ class Processor(BaseProcessor):
             collection_date = datetime.today().strftime('%Y-%m-%d')
             # Select problem collection
             collection = self.db_messages[f'{collection_date}']
+            del problem_dict["_id"]
             json_data = {'message': message, 'result': problem_dict}
             self.log(f'Save to MongoDB: {json_data}.')
             transaction_id = collection.insert_one(json_data).inserted_id
