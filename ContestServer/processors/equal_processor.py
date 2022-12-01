@@ -76,7 +76,6 @@ class Processor(BaseProcessor):
                     p.kill()
                     outs, errs = p.communicate()
                 results[test_key] = result
-                
             collection_date = datetime.today().strftime('%Y-%m-%d')
             # Select problem collection
             collection = self.db_messages[f'{collection_date}']

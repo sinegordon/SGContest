@@ -105,7 +105,7 @@ class Worker(Dispatcher):
         for name, p in self.processors.items():
             try:
                 res = p.process(message, self.config)
-                if not res is None:
+                if res is not None:
                     self.results[res['message']['id']] = res
             except Exception as err:
                 print(p.name, err)
