@@ -10,7 +10,8 @@
             "mongo_db_courses": "courses",
             "mongo_db_messages": "messages",
             "languages": {
-                "python3": "python"
+                "python3": "python #",
+                "c#": "csc # && mono #.exe"
             }
         },
         "add_problem_processor": {

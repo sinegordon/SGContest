@@ -4,7 +4,7 @@ services:
     restart: always
     build: ContestServer
     ports:
-      - "0.0.0.0:8000:8000"
+      - "0.0.0.0:57888:8000"
     volumes:
       - ./logs:/app/logs
       - ./contest_server.json:/app/config.json

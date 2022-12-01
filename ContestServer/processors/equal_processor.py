@@ -56,7 +56,8 @@ class Processor(BaseProcessor):
                 test_in = test['in']
                 test_out = test['out']
                 test_score = test['score']
-                p = Popen([self.languages_config[message['language']], fname], stdout=PIPE, stdin=PIPE, stderr=STDOUT)    
+                run_str = (self.languages_config[message['language']]).replace("#", fname)
+                p = Popen(run_str, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)    
                 try:
                     outs, errs = p.communicate(input=str.encode(test_in), timeout=30)
                     outs = outs.decode("utf-8").rstrip()
