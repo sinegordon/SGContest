@@ -11,7 +11,7 @@
             "mongo_db_messages": "messages",
             "languages": {
                 "python3": "python #",
-                "c#": "csc # && mono #.exe"
+                "c#": "csc # > /dev/null && mono #.exe"
             }
         },
         "add_problem_processor": {

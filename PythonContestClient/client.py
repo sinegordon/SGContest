@@ -12,14 +12,13 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.push_code.clicked.connect(self.select_file)
-    
-    
+        self.addr = "http://localhost:57888"
+
     async def check_problem(self):
         id = str(uuid.uuid4())
         mqtt_key = '123'
         user = self.edit_name.text()
         language = self.edit_language.text()
-        course = 'test'
         course = 'test'
         problem = str(self.spin_problem.value())
         variant = str(self.spin_variant.value())
