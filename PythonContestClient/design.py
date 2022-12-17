@@ -80,7 +80,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "Contest Client"))
         self.label_name.setText(_translate("MainWindow", "Имя студента в системе"))
         self.label_language.setText(_translate("MainWindow", "Язык программирования"))
-        self.edit_language.setText(_translate("MainWindow", "c#"))
+        self.edit_language.setText(_translate("MainWindow", "python3"))
         self.label_course.setText(_translate("MainWindow", "Код учебного курса"))
         self.edit_course.setText(_translate("MainWindow", "Программирование"))
         self.label_problem.setText(_translate("MainWindow", "Номер задачи"))
