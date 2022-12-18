@@ -13,3 +13,8 @@ services:
     image: mongo
     ports:
       - "27017:27017"
+    environment:
+      - MONGO_DATA_DIR=/data/db
+    volumes:
+        - ./dockerdata/db:/data/db
+    command: mongod
