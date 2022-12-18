@@ -32,10 +32,11 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         if not resp.ok:
             self.text_code.setPlainText("Не удалось отправить задачу")
             return
-        self.statusbar.showMessage("Задача успешно отправлена. Ожидаем проверки.")
+        self.text_code.setPlainText("Задача успешно отправлена. Ожидаем проверки.")
         message = {'id': id}
         flag = True
         count = 0
+        b = time.time()
         while flag:
             count += 1
             # self.statusbar.showMessage(f"Выполняется попытка №{count}.")
@@ -46,7 +47,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                     self.text_code.setPlainText(f"Задача проверена.\nРезультат:\n{result}")
                     self.statusbar.showMessage("")
                     break
-            time.sleep(1)
+            if time.time() - b > 1:
+                self.text_code.setPlainText("Задача не была проверена за отведенное время. Переоткройте программу и попробуйте еще раз.")
+                break
 
     def select_file(self):
         file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор файла с программой", None, "Python code (*.py);;C# code (*.cs)")[0]

@@ -50,12 +50,14 @@ class Processor(BaseProcessor):
             results = {}
             success_count = 0
             res_score = 0
+            max_res_score = 0
             for test_key in tests:
                 result = {'score': 0, 'test_out': ''}
                 test = tests[test_key]
                 test_in = test['in']
                 test_out = test['out']
                 test_score = test['score']
+                max_res_score += test_score
                 run_str = (self.languages_config[message['language']]).replace("#", fname)
                 p = Popen(run_str, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)    
                 try:
@@ -82,6 +84,7 @@ class Processor(BaseProcessor):
             collection = self.db_messages[f'{collection_date}']
             results['success_count'] = success_count
             results['res_score'] = res_score
+            results['max_res_score'] = max_res_score
             json_data = {'message': message, 'result': results}
             self.log(f'Save to MongoDB: {json_data}.')
             transaction_id = collection.insert_one(json_data).inserted_id
