@@ -13,8 +13,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.push_code.clicked.connect(self.select_file)
-        self.addr = "http://cluster.vstu.ru:57888"
-        #self.addr = "http://localhost:57888"
+        #self.addr = "http://cluster.vstu.ru:57888"
+        self.addr = "http://localhost:57888"
 
     async def check_problem(self):
         id = str(uuid.uuid4())
@@ -43,7 +43,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             async with aiohttp.ClientSession() as session:
                 async with session.post(f'{self.addr}/api/get_message_result', json=message) as resp:
                     result = await resp.json()
-                if 'error' not in result:
+                if result != None and 'error' not in result:
                     self.text_code.setPlainText(f"Задача проверена.\nРезультат:\n{result}")
                     self.statusbar.showMessage("")
                     break

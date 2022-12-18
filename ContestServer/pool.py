@@ -1,5 +1,6 @@
 import json
 
+from pymongo import MongoClient
 from multiprocessing import Queue
 from typing import Dict, Any
 
@@ -31,6 +32,18 @@ class WorkerPool:
                     del worker.results[res_id]
                     return json.dumps(res)
         return json.dumps({'error': 'Message ID not found in results'})
+    
+    def get_base_dump(self, message):
+        date = message["date"]
+        processor_name = message["processor_name"]
+        client = MongoClient(self.config["processors"][processor_name]['mongo_host'], 
+            self.config["processors"][processor_name]['mongo_port'])
+        db_messages = client[self.config["processors"][processor_name]['mongo_db_messages']]
+        collection = db_messages[date]
+        data = list(collection.find({}))
+        for m in data:
+            del m['_id']
+        return json.dumps({'data': data})
 
     def add_processor(self, name):
         message = {'method': 'add_processor', 'name': name}
