@@ -24,8 +24,10 @@ class Processor(BaseProcessor):
             config = self.config
 
         try:
-            need_keys = ('id', 'mqtt_key', 'user', 'language', 'course', 'problem', 'variant', 'code')
+            need_keys = ('id', 'mqtt_key', 'user', 'language', 'course', 'problem', 'variant', 'code', 'action')
             if not all(k in message for k in need_keys):
+                return None
+            if message['action'] != 'test_problem':
                 return None
             pr = int(message['problem'])
             var = message['variant']

@@ -26,7 +26,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         variant = str(self.spin_variant.value())
         code = self.text_code.toPlainText()
         message = {'id': id, 'mqtt_key': mqtt_key, 'user': user,
-                    'language': language, 'course': course,
+                    'language': language, 'course': course, 'action': 'test_problem',
                     'problem': problem, 'variant': variant, 'code': code}
         resp = requests.post(f'{self.addr}/api/add_message', json=message)
         if not resp.ok:
