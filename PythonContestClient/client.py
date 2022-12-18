@@ -20,6 +20,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         id = str(uuid.uuid4())
         mqtt_key = '123'
         user = self.edit_name.text()
+        if user == "":
+            self.text_code.setPlainText("Задайте имя студента!")
+            return
         language = self.edit_language.text()
         course = 'test'
         problem = str(self.spin_problem.value())
