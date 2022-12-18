@@ -13,8 +13,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.push_code.clicked.connect(self.select_file)
-        #self.addr = "http://cluster.vstu.ru:57888"
-        self.addr = "http://localhost:57888"
+        self.addr = "http://cluster.vstu.ru:57888"
+        #self.addr = "http://localhost:57888"
 
     async def check_problem(self):
         id = str(uuid.uuid4())

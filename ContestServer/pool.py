@@ -36,6 +36,9 @@ class WorkerPool:
     def get_base_dump(self, message):
         date = message["date"]
         processor_name = message["processor_name"]
+        admin_key = message.get("admin_key", "")
+        if admin_key != self.config["admin_key"]:
+            return json.dumps({'error': 'Need admin_key for process request!'})
         client = MongoClient(self.config["processors"][processor_name]['mongo_host'], 
             self.config["processors"][processor_name]['mongo_port'])
         db_messages = client[self.config["processors"][processor_name]['mongo_db_messages']]
