@@ -85,6 +85,7 @@ class Processor(BaseProcessor):
             results['success_count'] = success_count
             results['res_score'] = res_score
             results['max_res_score'] = max_res_score
+            results['timestamp'] = int(time.time())
             json_data = {'message': message, 'result': results}
             self.log(f'Save to MongoDB: {json_data}.')
             transaction_id = collection.insert_one(json_data).inserted_id

@@ -48,7 +48,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                     self.statusbar.showMessage("")
                     break
             if time.time() - b > 30:
-                self.text_code.setPlainText("Задача не была проверена за отведенное время. Переоткройте программу и попробуйте еще раз.")
+                self.text_code.setPlainText("Задача не была проверена за отведенное время. Попробуйте еще раз.")
                 break
 
     def select_file(self):
