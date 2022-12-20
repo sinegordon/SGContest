@@ -38,7 +38,7 @@ class Processor(BaseProcessor):
                     collection = self.db_courses[message['data_key']]
                     ret = list(collection.find({}))
                     for x in ret:
-                        l.append({str(x['problem']): list(x['variants'].keys()), "task": x.get("task", "")})
+                        l.append({str(x['problem']): list(x['variants'].keys()), "rating": x.get('rating', 0), "task": x.get('task', "")})
                 data_dict[message["type"]] = l
                 print(f"Data - {data_dict}")
             except Exception as e:

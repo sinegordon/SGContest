@@ -47,6 +47,46 @@ class WorkerPool:
         for m in data:
             del m['_id']
         return json.dumps({'data': data})
+    
+    def get_user_info(self, message):
+        user_name = message["user_name"]
+        client = MongoClient(self.config["user_info_mongo"]['mongo_host'], 
+            self.config["user_info_mongo"]['mongo_port'])
+        db_info = client['info']
+        collection = db_info[self.config["user_info_mongo"]['mongo_db_users']]
+        data = list(collection.find({"user_name": user_name}))
+        if len(data) > 0:
+            data = data[0]
+            del data['_id']
+            return json.dumps({'data': data})
+        else:
+            return json.dumps({'error': 'No user_name in base!'})
+    
+    def add_user_info(self, message):
+        if "user_name" not in message:
+            return json.dumps({'error': 'Need user_name key!'})
+        if "data" not in message:
+            return json.dumps({'error': 'Need data key!'})
+        user_name = message["user_name"]
+        client = MongoClient(self.config["user_info_mongo"]['mongo_host'], 
+            self.config["user_info_mongo"]['mongo_port'])
+        db_info = client['info']
+        collection = db_info[self.config["user_info_mongo"]['mongo_db_users']]
+        data = list(collection.find({"user_name": user_name}))
+        if len(data) > 0:
+            data = data[0]
+            collection.update_one({
+                "_id": data["_id"]
+                },
+                {
+                "$set": {
+                    "data": data["data"]
+                }
+                }, upsert=False
+            )
+        else:
+            collection.insert_one(message)
+        return json.dumps({'data': 'sucess'})
 
     def add_processor(self, name):
         message = {'method': 'add_processor', 'name': name}

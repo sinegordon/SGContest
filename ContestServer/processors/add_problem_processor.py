@@ -58,6 +58,7 @@ class Processor(BaseProcessor):
                 else:
                     problem_dict["problem"] = pr
                     problem_dict["type"] = message["type"]
+                    problem_dict["rating"] = message["rating"]
                     problem_dict["variants"] = {}
                     problem_dict["variants"][var] = message["tests"]
                     transaction_id = collection.insert_one(problem_dict).inserted_id

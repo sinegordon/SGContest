@@ -3,6 +3,11 @@
     "workers": 2,
     "admin_key": "e86e915a-249f-4fdc-a48a-7c3f9a0b36ff",
     "processors_root": "/app/processors/",
+    "user_info_mongo": {            
+        "mongo_host": "mongo",
+        "mongo_port": 27017,
+        "mongo_db_users": "users"
+    },
     "processors": {
         "equal_processor": {
             "type": "equal_processor",

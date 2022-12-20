@@ -1,7 +1,10 @@
+СТРУКТУРА И ДОБАВЛЕНИЕ ЗАДАЧ
+
 Коллекция задач к курсу представляет собой набор json-документов вида:
 {
     "problem": <номер задачи, тип целый>,
     "task": <условие задачи, тип строковый>,
+    "rating": <сложность задачи, тип целый, набор значений (1,2,3) по возрастанию сложности>
     "type": <тип задачи (тип процессора для обработки - на данный момент только equal), тип строковый>,
     "variants": <варианты задачи, тип json-документ, ключи - номера вариантов>
 }
@@ -24,6 +27,7 @@ print(int(input()) + 1)
 {
     "problem": 1,
     "type": "equal",
+    "rating": 1,
     "task": "Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.",
     "variants":
     {
@@ -60,7 +64,6 @@ print(int(input()) + 1)
     }
 }
 
-ДЛА АДМИНИСТРАТОРА!
 Пример запроса на добавление ОДНОГО варианта задачи в курс.
 Добавление нескольких вариантов пока не поддерживается!
 Если задачи нет, она вставится (как и курс).
@@ -74,7 +77,8 @@ json = {
         "user": "aasdd", 
         "type": "equal", 
         "course": "programming", 
-        "problem": 3, 
+        "problem": 3,
+        "rating": 1,
         "variant": "1",
         "action": "add_problem",
         "task": "Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.",
@@ -94,5 +98,67 @@ json = {
                 }
             }
      }
-r = requests.post("http://localhost:8000/api/add_message", json=json)
+r = requests.post("http://localhost:57888/api/add_message", json=json)
 print(r)
+
+ПОЛУЧИТЬ ДАННЫЕ О СПИСКЕ КОЛЛЕКЦИЙ
+
+Сначала запрос на выполенение работы
+id = str(uuid.uuid4())
+message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "courses", "data_key": "","action": "get_data" }
+resp = requests.post("http://localhost:57888/api/add_message", json=message)
+
+Потом запрос на проверку результата запроса
+message = { "id": id }
+resp = requests.post("http://localhost:57888/api/get_message_result", json=message)
+
+Пример ответа
+{
+    'message': {'id': '0f54f511-6152-46c6-ab1d-12b393b861c9',
+    'mqtt_key': '234',
+    'user': '2321',
+    'type': 'courses',
+    'data_key': '',
+    'action': 'get_data',
+    'timestamp': 1669655171},
+    'result': {'courses': ['test']}
+ }
+
+ПОЛУЧИТЬ ДАННЫЕ О СТУКТУРЕ КОЛЛЕКЦИИ
+
+Сначала запрос на выполенение работы
+id = str(uuid.uuid4())
+message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "problems", "data_key": "test", "action": "get_data" }
+resp = requests.post("http://localhost:57888/api/add_message", json=message)
+
+Потом запрос на проверку результата запроса
+message = { "id": id }
+resp = requests.post(
+    "http://localhost:57888/api/get_message_result", json=message)
+
+Пример ответа
+{'message': {'id': 'bb56af03-e83e-493e-9a2e-1a73bf80a1f4',
+  'mqtt_key': '234',
+  'user': '2321',
+  'type': 'problems',
+  'data_key': 'test',
+  'action': 'get_data',
+  'timestamp': 1669822065},
+ 'result': 
+    {'problems': 
+        [
+            {'1': ['1', '2'], 'rating': 1,
+            'task': 'Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.'},
+            {'2': ['1', '2'], 'rating': 1,
+            'task': 'Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.'}
+        ]
+    }
+}
+
+ПОЛУЧИТЬ ДАМП БАЗЫ СООБЩЕНИЙ ЗА КАКУЮ-ТО ДАТУ
+
+message = { "date": "2022-12-18", "processor_name": "equal_processor", "admin_key": "1111111" }
+resp = requests.post(
+    "http://localhost:57888/api/get_base_dump", json=message)
+
+
