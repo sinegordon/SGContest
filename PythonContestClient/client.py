@@ -6,6 +6,8 @@ import requests
 import aiohttp
 import asyncio
 import time
+import random
+import json
 
 
 class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
@@ -13,8 +15,42 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.push_code.clicked.connect(self.select_file)
-        self.addr = "http://cluster.vstu.ru:57888"
-        #self.addr = "http://localhost:57888"
+        self.user_data = {}
+        # self.addr = "http://cluster.vstu.ru:57888"
+        self.addr = "http://localhost:57888"
+
+    def get_user(self):
+        id = str(uuid.uuid4())
+        user = self.edit_name.text()
+        if user == "":
+            self.text_code.setPlainText("Задайте имя студента!")
+            return
+        message = {"user_name": user}
+        resp = requests.post(
+            f"{self.addr}/api/get_user_info", json=message)
+        if resp.status_code == 200 and "data" in resp.json():
+            self.user_data = resp.json()["data"]
+        if "test" not in self.user_data:
+            id = str(uuid.uuid4())
+            message = {"id": id, "mqtt_key": "234", "user": user, "type": "problems", "data_key": "test", "action": "get_data"}
+            resp = requests.post(f"{self.addr}/api/add_message", json=message)
+            time.sleep(2)
+            message = {"id": id}
+            resp = requests.post(f"{self.addr}/api/get_message_result", json=message)
+            if resp.status_code == 200 and "result" in resp.json():
+                problems = resp.json()["result"]["problems"]
+                prmas = []
+                for problem in problems:
+                    pr = [x for x in problem.keys() if x.isnumeric()][0]
+                    prmas.append(pr)
+                prlist = random.sample(prmas, 3)
+                test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
+                self.user_data["test"] = test
+                message = {"user_name": user, "data": self.user_data}
+                resp = requests.post(f"{self.addr}/api/add_user_info", json=message)
+        self.text_code.setPlainText(
+                    "Ваш тестовый вариант:\n" + json.dumps(self.user_data["test"]))
+
 
     async def check_problem(self):
         id = str(uuid.uuid4())
@@ -23,6 +59,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         if user == "":
             self.text_code.setPlainText("Задайте имя студента!")
             return
+        self.get_user()
+        return
         language = self.edit_language.text()
         course = 'test'
         problem = str(self.spin_problem.value())
@@ -55,11 +93,11 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 break
 
     def select_file(self):
-        file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор файла с программой", None, "Python code (*.py);;C# code (*.cs)")[0]
-        if not file_name:
-            return
-        with open(file_name, 'r') as f:
-            self.text_code.setPlainText(f.read())
+        #file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор файла с программой", None, "Python code (*.py);;C# code (*.cs)")[0]
+        #if not file_name:
+        #    return
+        #with open(file_name, 'r') as f:
+        #    self.text_code.setPlainText(f.read())
         asyncio.run(self.check_problem())
 
 def main():
