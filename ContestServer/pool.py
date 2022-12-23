@@ -74,20 +74,17 @@ class WorkerPool:
         db_info = client['info']
         collection = db_info[self.config["user_info_mongo"]['mongo_db_users']]
         data = list(collection.find({"user_name": user_name}))
-        print(data)
-        print(message)
         if len(data) > 0:
             data = data[0]
             res = collection.update_one({
-                "_id": str(data["_id"])
+                "_id": data["_id"]
                 },
                 {
                 "$set": {
-                    "data": data["data"]
+                    "data": message["data"]
                 }
                 }, upsert=False
             )
-            print(res)
         else:
             collection.insert_one(message)
         return json.dumps({'data': 'sucess'})
