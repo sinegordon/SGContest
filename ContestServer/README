@@ -101,7 +101,7 @@ json = {
 r = requests.post("http://localhost:57888/api/add_message", json=json)
 print(r)
 
-ПОЛУЧИТЬ ДАННЫЕ О СПИСКЕ КОЛЛЕКЦИЙ
+ПОЛУЧИТЬ ДАННЫЕ О СПИСКЕ КОЛЛЕКЦИЙ (АСИНХРОННЫЙ ВАРИАНТ)
 
 Сначала запрос на выполенение работы
 id = str(uuid.uuid4())
@@ -124,7 +124,14 @@ resp = requests.post("http://localhost:57888/api/get_message_result", json=messa
     'result': {'courses': ['test']}
  }
 
-ПОЛУЧИТЬ ДАННЫЕ О СТУКТУРЕ КОЛЛЕКЦИИ
+ПОЛУЧИТЬ ДАННЫЕ О СПИСКЕ КОЛЛЕКЦИЙ (СИНХРОННЫЙ ВАРИАНТ)
+
+id = str(uuid.uuid4())
+message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "courses", "data_key": "","action": "get_data" }
+resp = requests.post("http://localhost:57888/api/get_courses_data", json=message)
+Результат такой же как в асинхронном варианте.
+
+ПОЛУЧИТЬ ДАННЫЕ О СТУКТУРЕ КОЛЛЕКЦИИ (АСИНХРОННЫЙ ВАРИАНТ)
 
 Сначала запрос на выполенение работы
 id = str(uuid.uuid4())
@@ -154,6 +161,14 @@ resp = requests.post(
         ]
     }
 }
+
+ПОЛУЧИТЬ ДАННЫЕ О СТУКТУРЕ КОЛЛЕКЦИИ (СИНХРОННЫЙ ВАРИАНТ)
+
+id = str(uuid.uuid4())
+message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "problems", "data_key": "test", "action": "get_data" }
+resp = requests.post("http://localhost:57888/api/get_courses_data", json=message)
+Результат такой же как в асинхронном варианте.
+
 
 ПОЛУЧИТЬ ДАМП БАЗЫ СООБЩЕНИЙ ЗА КАКУЮ-ТО ДАТУ
 
