@@ -52,7 +52,7 @@ class WorkerPool:
     def get_user_info(self, message):
         user_name = message["user_name"]
         client = MongoClient(self.config["user_info_mongo"]['mongo_host'], 
-self.config["user_info_mongo"]['mongo_port'])
+            self.config["user_info_mongo"]['mongo_port'])
         db_info = client['info']
         collection = db_info[self.config["user_info_mongo"]['mongo_db_users']]
         data = list(collection.find({"user_name": user_name}))
@@ -69,7 +69,8 @@ self.config["user_info_mongo"]['mongo_port'])
         if "data" not in message:
             return json.dumps({'error': 'Need data key!'})
         user_name = message["user_name"]
-        client = MongoClient(self.config["user_info_mongo"]['mongo_host'], self.config["user_info_mongo"]['mongo_port'])
+        client = MongoClient(self.config["user_info_mongo"]['mongo_host'],
+            self.config["user_info_mongo"]['mongo_port'])
         db_info = client['info']
         collection = db_info[self.config["user_info_mongo"]['mongo_db_users']]
         data = list(collection.find({"user_name": user_name}))
