@@ -18,8 +18,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.user = ""
         self.user_data = {}
         self.test_problerms_count = 3
-        # self.addr = "http://cluster.vstu.ru:57888"
-        self.addr = "http://localhost:57888"
+        self.addr = "http://cluster.vstu.ru:57888"
+        #self.addr = "http://localhost:57888"
         self.spin_problem.setMinimum = 1
         self.spin_problem.setMaximum = self.test_problerms_count
         self.spin_problem.valueChanged.connect(self.select_problem)
