@@ -54,7 +54,7 @@ class Processor(BaseProcessor):
             res_score = 0
             max_res_score = 0
             for test_key in tests:
-                result = {'score': 0, 'test_out': ''}
+                result = {'score': 0, 'test_out': '', 'test_in': ''}
                 test = tests[test_key]
                 test_in = test['in']
                 test_out = test['out']
@@ -72,6 +72,7 @@ class Processor(BaseProcessor):
                     self.log(f'Program output - {outs}')
                     self.log(f'Reference output - {test_out}')
                     result['test_out'] = outs
+                    result['test_in'] = test_in
                     if test_out == outs:
                         result['score'] = test_score
                         res_score += test_score
