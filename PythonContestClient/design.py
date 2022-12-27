@@ -83,7 +83,7 @@ class Ui_MainWindow(object):
         self.edit_language.setText(_translate("MainWindow", "python3"))
         self.label_course.setText(_translate("MainWindow", "Код учебного курса"))
         self.edit_course.setText(_translate("MainWindow", "ЦК"))
-        self.label_problem.setText(_translate("MainWindow", "Тестовая задача"))
+        self.label_problem.setText(_translate("MainWindow", "Тестовая задача №"))
         self.label_variant.setText(_translate("MainWindow", "Вариант"))
         self.push_code.setText(_translate("MainWindow", "Загрузить вариант"))
         self.spin_variant.setValue(1)

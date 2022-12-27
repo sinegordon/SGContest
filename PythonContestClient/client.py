@@ -18,8 +18,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.user = ""
         self.user_data = {}
         self.test_problerms_count = 3
-        # self.addr = "http://cluster.vstu.ru:57888"
-        self.addr = "http://localhost:57888"
+        self.addr = "http://cluster.vstu.ru:57888"
+        #self.addr = "http://localhost:57888"
         self.spin_problem.setMinimum = 1
         self.spin_problem.setMaximum = self.test_problerms_count
         self.spin_problem.valueChanged.connect(self.select_problem)
@@ -47,7 +47,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             return
         i = self.spin_problem.value()
         if i <= self.test_problerms_count and i > 0:
-            self.text_code.setPlainText(self.user_data["test"][i-1]["task"])
+            last_result = self.user_data["test"][i-1].get("last_result", "")
+            if last_result != "" : last_result = "\n-----\n" + last_result
+            self.text_code.setPlainText(self.user_data["test"][i-1]["task"] + last_result)
 
     def get_user_data(self):
         id = str(uuid.uuid4())
@@ -60,7 +62,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             f"{self.addr}/api/get_user_info", json=message)
         if resp.status_code == 200 and "data" in resp.json():
             self.user_data = resp.json()["data"]["data"]
-            print(self.user_data)
+            self.edit_name.setEnabled(False)
         if "test" not in self.user_data:
             id = str(uuid.uuid4())
             message = {"id": id, "mqtt_key": "234", "user": self.user, "type": "problems", "data_key": "test", "action": "get_data"}
@@ -83,16 +85,12 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     async def check_problem(self):
         id = str(uuid.uuid4())
         mqtt_key = '123'
-        user = self.edit_name.text()
-        if user == "":
-            self.text_code.setPlainText("Задайте имя студента!")
-            return
         language = self.edit_language.text()
         course = 'test'
         problem = self.spin_problem.value()
         variant = str(self.spin_variant.value())
         code = self.text_code.toPlainText()
-        message = {'id': id, 'mqtt_key': mqtt_key, 'user': user,
+        message = {'id': id, 'mqtt_key': mqtt_key, 'user': self.user,
                     'language': language, 'course': course, 'action': 'test_problem',
                     'problem': self.get_problem_number(self.user_data["test"][problem - 1]), 'variant': variant, 'code': code}
         resp = requests.post(f'{self.addr}/api/add_message', json=message)
@@ -124,9 +122,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                                 i += 1
                     last_result = f"Задача проверена.\nРезультат:\nНабрано {result['result']['res_score']} баллов из {result['result']['max_res_score']} возможных.\n{bad_in}"
                     self.user_data["test"][problem - 1]["last_result"] = last_result
-                    self.text_code.setPlainText(last_result)
+                    self.text_code.setPlainText(self.user_data["test"][problem - 1]["task"] + "\n-------\n" + last_result)
                     self.statusbar.showMessage("")
-                    message = {"user_name": user, "data": self.user_data}
+                    message = {"user_name": self.user, "data": self.user_data}
                     requests.post(f"{self.addr}/api/add_user_info", json=message)
                     break
             if time.time() - b > 30:
