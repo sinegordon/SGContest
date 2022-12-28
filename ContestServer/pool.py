@@ -142,8 +142,9 @@ class WorkerPool:
             try:
                 # Удаление курса
                 if message['type'] == 'course':
-                    ret = self.db_courses[need_keys["data_key"]].drop()
-                    data_dict[need_keys["data_key"]] = "Droped!"
+                    print(f"Deleting course '{message['data_key']}'")
+                    self.db_courses[message["data_key"]].drop()
+                    data_dict[message["data_key"]] = "Droped!"
                 # Удаление задач - пока не реализовано
                 elif message['type'] == 'problem':
                     pass
