@@ -126,6 +126,36 @@ class WorkerPool:
             print(f'Process error: {str(err)}')
             return json.dumps({'error':  {str(err)}})
 
+    def clear_data(self, message):
+        client = MongoClient(
+            self.config['processors']['get_courses_data_processor']['mongo_host'],
+            self.config['processors']['get_courses_data_processor']['mongo_port'])
+        self.db_courses = client[self.config['processors']['get_courses_data_processor']['mongo_db_courses']]
+        self.db_messages = client[self.config['processors']['get_courses_data_processor']['mongo_db_messages']]
+        try:
+            need_keys = ('id', 'mqtt_key', 'user', 'type', 'data_key', 'action')
+            data_dict = {}
+            if not all(k in message for k in need_keys):
+                return json.dumps({'error': 'Missing one of needs key!'})
+            if message['action'] != 'clear_data':
+                return json.dumps({'error': 'No supported action!'})
+            try:
+                # Удаление курса
+                if message['type'] == 'course':
+                    ret = self.db_courses[need_keys["data_key"]].drop()
+                    data_dict[need_keys["data_key"]] = "Droped!"
+                # Удаление задач - пока не реализовано
+                elif message['type'] == 'problem':
+                    pass
+            except Exception as err:
+                print(f'Process error: {str(err)}')
+                return json.dumps({'error':  {str(err)}})
+            json_data = {'data': data_dict}
+            return json.dumps(json_data)
+        except Exception as err:
+            print(f'Process error: {str(err)}')
+            return json.dumps({'error':  {str(err)}})
+
     def add_processor(self, name):
         message = {'method': 'add_processor', 'name': name}
         s = json.dumps(message)

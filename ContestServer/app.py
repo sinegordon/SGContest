@@ -86,6 +86,17 @@ class GetCoursesData():
             resp.status = falcon.HTTP_500
             print(f'App error: {str(err)}')
 
+class ClearData():
+    '''API method for clear data in collections'''
+
+    def on_post(self, req, resp):
+        try:
+            resp.body = pool.clear_data(req.media)
+            resp.status = falcon.HTTP_200
+        except Exception as err:
+            resp.status = falcon.HTTP_500
+            print(f'App error: {str(err)}')
+
 
 # Run API
 api = falcon.API()
@@ -96,9 +107,11 @@ get_base_dump = GetBaseDump()
 add_user_info = AddUserInfo()
 get_user_info = GetUserInfo()
 get_courses_data = GetCoursesData()
+clear_data = ClearData()
 api.add_route('/api/add_message', add_message_to_queue)
 api.add_route('/api/get_message_result', get_message_result)
 api.add_route('/api/get_base_dump', get_base_dump)
 api.add_route('/api/get_user_info', get_user_info)
 api.add_route('/api/add_user_info', add_user_info)
 api.add_route('/api/get_courses_data', get_courses_data)
+api.add_route('/api/clear_data', clear_data)
