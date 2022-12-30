@@ -133,6 +133,7 @@ class WorkerPool:
         self.db_courses = client[self.config['processors']['get_courses_data_processor']['mongo_db_courses']]
         self.db_messages = client[self.config['processors']['get_courses_data_processor']['mongo_db_messages']]
         try:
+            print(f"Got message: {message}")
             need_keys = ('id', 'mqtt_key', 'user', 'type', 'data_key', 'action')
             data_dict = {}
             if not all(k in message for k in need_keys):
@@ -141,6 +142,7 @@ class WorkerPool:
                 return json.dumps({'error': 'No supported action!'})
             try:
                 # Удаление курса
+                print(f"Begin deleting course!")
                 if message['type'] == 'course':
                     print(f"Deleting course '{message['data_key']}'")
                     self.db_courses[message["data_key"]].drop()
