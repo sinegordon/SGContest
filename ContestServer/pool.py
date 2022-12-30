@@ -127,13 +127,13 @@ class WorkerPool:
             return json.dumps({'error':  {str(err)}})
 
     def clear_data(self, message):
+        print(f"Got message: {message}")
         client = MongoClient(
             self.config['processors']['get_courses_data_processor']['mongo_host'],
             self.config['processors']['get_courses_data_processor']['mongo_port'])
         self.db_courses = client[self.config['processors']['get_courses_data_processor']['mongo_db_courses']]
         self.db_messages = client[self.config['processors']['get_courses_data_processor']['mongo_db_messages']]
         try:
-            print(f"Got message: {message}")
             need_keys = ('id', 'mqtt_key', 'user', 'type', 'data_key', 'action')
             data_dict = {}
             if not all(k in message for k in need_keys):
