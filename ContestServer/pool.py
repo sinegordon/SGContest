@@ -127,7 +127,6 @@ class WorkerPool:
             return json.dumps({'error':  {str(err)}})
 
     def clear_data(self, message):
-        print(f"Got message: {message}")
         client = MongoClient(
             self.config['processors']['get_courses_data_processor']['mongo_host'],
             self.config['processors']['get_courses_data_processor']['mongo_port'])
@@ -142,7 +141,6 @@ class WorkerPool:
                 return json.dumps({'error': 'No supported action!'})
             try:
                 # Удаление курса
-                print(f"Begin deleting course!")
                 if message['type'] == 'course':
                     print(f"Deleting course '{message['data_key']}'")
                     self.db_courses[message["data_key"]].drop()
