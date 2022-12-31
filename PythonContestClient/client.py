@@ -17,11 +17,13 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.push_code.clicked.connect(self.do_process)
         self.user = ""
         self.user_data = {}
-        self.test_problerms_count = 3
+        self.test_problerms_count1 = 1
+        self.test_problerms_count2 = 8
+        self.test_problerms_count3 = 1
         self.addr = "http://cluster.vstu.ru:57888"
         #self.addr = "http://localhost:57888"
         self.spin_problem.setMinimum = 1
-        self.spin_problem.setMaximum = self.test_problerms_count
+        self.spin_problem.setMaximum = self.test_problerms_count1 + self.test_problerms_count2 + self.test_problerms_count3
         self.spin_problem.valueChanged.connect(self.select_problem)
         self.state = 0
 
@@ -43,12 +45,13 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             self.select_file()
 
     def select_problem(self):
+        max_spin = self.test_problerms_count1 + self.test_problerms_count2 + self.test_problerms_count3
         if self.state != 1:
             return
         i = self.spin_problem.value()
-        if i <= self.test_problerms_count and i > 0:
+        if i <= max_spin and i > 0:
             last_result = self.user_data["test"][i-1].get("last_result", "")
-            if last_result != "" : last_result = "\n-----\n" + last_result
+            if last_result != "": last_result = "\n-----\n" + last_result
             self.text_code.setPlainText(self.user_data["test"][i-1]["task"] + last_result)
 
     def get_user_data(self):
@@ -70,11 +73,21 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 f"{self.addr}/api/get_courses_data", json=message)
             if resp.status_code == 200 and "data" in resp.json():
                 problems = resp.json()["data"]["problems"]
-                prmas = []
+                prmas1 = []
+                prmas2 = []
+                prmas3 = []
                 for problem in problems:
                     pr = [x for x in problem.keys() if x.isnumeric()][0]
-                    prmas.append(pr)
-                prlist = random.sample(prmas, self.test_problerms_count)
+                    if 'rating' in problem and problem['rating'] == 1:
+                        prmas1.append(pr)
+                    elif 'rating' in problem and problem['rating'] == 2:
+                        prmas2.append(pr)
+                    elif 'rating' in problem and problem['rating'] == 3:
+                        prmas3.append(pr)
+                prlist1 = random.sample(prmas1, self.test_problerms_count1)
+                prlist2 = random.sample(prmas2, self.test_problerms_count2)
+                prlist3 = random.sample(prmas3, self.test_problerms_count3)
+                prlist = prlist1 + prlist2 + prlist3
                 test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
                 self.user_data["test"] = test
                 message = {"user_name": self.user, "data": self.user_data}
@@ -120,6 +133,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                              and result['result'][key]['score'] == 0:
                                 bad_in += f"{i}) " + str(result['result'][key]['test_in'].strip()) + "\n"
                                 i += 1
+                                # Показываем только первую ошибку
+                                break
                     last_result = f"Задача проверена.\nРезультат:\nНабрано {result['result']['res_score']} баллов из {result['result']['max_res_score']} возможных.\n{bad_in}"
                     self.user_data["test"][problem - 1]["last_result"] = last_result
                     self.text_code.setPlainText(self.user_data["test"][problem - 1]["task"] + "\n-------\n" + last_result)
