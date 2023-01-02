@@ -16,6 +16,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.push_code.clicked.connect(self.do_process)
         self.user = ""
+        self.test_code = ""
         self.user_data = {}
         self.test_problerms_count1 = 1
         self.test_problerms_count2 = 8
@@ -89,6 +90,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 prlist3 = random.sample(prmas3, self.test_problerms_count3)
                 prlist = prlist1 + prlist2 + prlist3
                 test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
+                print(test)
                 self.user_data["test"] = test
                 message = {"user_name": self.user, "data": self.user_data}
                 resp = requests.post(f"{self.addr}/api/add_user_info", json=message)
@@ -102,7 +104,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         course = 'test'
         problem = self.spin_problem.value()
         variant = str(self.spin_variant.value())
-        code = self.text_code.toPlainText()
+        code = self.test_code
         message = {'id': id, 'mqtt_key': mqtt_key, 'user': self.user,
                     'language': language, 'course': course, 'action': 'test_problem',
                     'problem': self.get_problem_number(self.user_data["test"][problem - 1]), 'variant': variant, 'code': code}
@@ -151,7 +153,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         if not file_name:
             return
         with open(file_name, 'r') as f:
-            self.text_code.setPlainText(f.read())
+            self.test_code = f.read()
         asyncio.run(self.check_problem())
 
 
