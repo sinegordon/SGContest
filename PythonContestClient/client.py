@@ -23,8 +23,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.test_problerms_count3 = 1
         self.addr = "http://cluster.vstu.ru:57888"
         #self.addr = "http://localhost:57888"
-        self.spin_problem.setMinimum = 1
-        self.spin_problem.setMaximum = self.test_problerms_count1 + self.test_problerms_count2 + self.test_problerms_count3
+        self.spin_problem.setMinimum(1)
         self.spin_problem.valueChanged.connect(self.select_problem)
         self.state = 0
 
@@ -42,6 +41,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             if "test" in self.user_data:
                 self.state = 1
                 self.push_code.setText("Загрузить и проверить код")
+                self.spin_problem.setMaximum(len(self.user_data["test"]))
         elif self.state == 1:
             self.select_file()
 
@@ -90,7 +90,6 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 prlist3 = random.sample(prmas3, self.test_problerms_count3)
                 prlist = prlist1 + prlist2 + prlist3
                 test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
-                print(test)
                 self.user_data["test"] = test
                 message = {"user_name": self.user, "data": self.user_data}
                 resp = requests.post(f"{self.addr}/api/add_user_info", json=message)
