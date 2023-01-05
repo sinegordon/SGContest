@@ -16,6 +16,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.push_code.clicked.connect(self.do_process)
         self.user = ""
+        self.course = "test"
         self.test_code = ""
         self.user_data = {}
         self.test_problerms_count1 = 1
@@ -38,10 +39,10 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def do_process(self):
         if self.state == 0:
             self.get_user_data()
-            if "test" in self.user_data:
+            if self.course in self.user_data:
                 self.state = 1
                 self.push_code.setText("Загрузить и проверить код")
-                self.spin_problem.setMaximum(len(self.user_data["test"]))
+                self.spin_problem.setMaximum(len(self.user_data[self.course]))
         elif self.state == 1:
             self.select_file()
 
@@ -51,9 +52,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             return
         i = self.spin_problem.value()
         if i <= max_spin and i > 0:
-            last_result = self.user_data["test"][i-1].get("last_result", "")
+            last_result = self.user_data[self.course][i-1].get("last_result", "")
             if last_result != "": last_result = "\n-----\n" + last_result
-            self.text_code.setPlainText(self.user_data["test"][i-1]["task"] + last_result)
+            self.text_code.setPlainText(self.user_data[self.course][i-1]["task"] + last_result)
 
     def get_user_data(self):
         id = str(uuid.uuid4())
@@ -64,12 +65,14 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         message = {"user_name": self.user}
         resp = requests.post(
             f"{self.addr}/api/get_user_info", json=message)
+        last_result = ""
         if resp.status_code == 200 and "data" in resp.json():
             self.user_data = resp.json()["data"]["data"]
             self.edit_name.setEnabled(False)
-        if "test" not in self.user_data:
+            last_result = self.user_data[self.course][0].get("last_result", "")
+        if self.course not in self.user_data:
             id = str(uuid.uuid4())
-            message = {"id": id, "mqtt_key": "234", "user": self.user, "type": "problems", "data_key": "test", "action": "get_data"}
+            message = {"id": id, "mqtt_key": "234", "user": self.user, "type": "problems", "data_key": self.course, "action": "get_data"}
             resp = requests.post(
                 f"{self.addr}/api/get_courses_data", json=message)
             if resp.status_code == 200 and "data" in resp.json():
@@ -90,11 +93,12 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 prlist3 = random.sample(prmas3, self.test_problerms_count3)
                 prlist = prlist1 + prlist2 + prlist3
                 test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
-                self.user_data["test"] = test
+                self.user_data[self.course] = test
                 message = {"user_name": self.user, "data": self.user_data}
                 resp = requests.post(f"{self.addr}/api/add_user_info", json=message)
         self.spin_problem.setValue(1)
-        self.text_code.setPlainText(self.user_data["test"][0]["task"])
+        if last_result != "": last_result = "\n-----\n" + last_result
+        self.text_code.setPlainText(self.user_data[self.course][0]["task"] + last_result)
 
     async def check_problem(self):
         id = str(uuid.uuid4())
