@@ -55,13 +55,19 @@ class WorkerPool:
             self.config["user_info_mongo"]['mongo_port'])
         db_info = client['info']
         collection = db_info[self.config["user_info_mongo"]['mongo_db_users']]
-        data = list(collection.find({"user_name": user_name}))
-        if len(data) > 0:
-            data = data[0]
-            del data['_id']
+        if user_name == "*":
+            data = list(collection.find({}))
+            for x in data:
+                del x['_id']
             return json.dumps({'data': data})
         else:
-            return json.dumps({'error': 'No user_name in base!'})
+            data = list(collection.find({"user_name": user_name}))
+            if len(data) > 0:
+                data = data[0]
+                del data['_id']
+                return json.dumps({'data': data})
+            else:
+                return json.dumps({'error': 'No user_name in base!'})
 
     def add_user_info(self, message):
         if "user_name" not in message:
