@@ -103,7 +103,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     async def check_problem(self):
         id = str(uuid.uuid4())
         mqtt_key = '123'
-        language = self.edit_language.text()
+        language = self.edit_language.currentText()
         course = 'test'
         problem = self.spin_problem.value()
         variant = str(self.spin_variant.value())
@@ -152,8 +152,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 break
 
     def select_file(self):
+        ext = self.edit_language.currentData()
         file_name = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Выбор файла с программой", None, "Python code (*.py);;C# code (*.cs);;C++ code (*.cpp);;C code (*.c)")[0]
+            self, "Выбор файла с программой", None, f"Code file ({ext})")[0]
         if not file_name:
             return
         with open(file_name, 'r') as f:
