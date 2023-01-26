@@ -18,8 +18,8 @@
             "languages": {
                 "python3": "python3 #",
                 "c#": "csc # > /dev/null && mono #.exe",
-                "gcc": "gcc -o a.out # > /dev/null && ./a.out",
-                "g++": "g++ -o a.out # > /dev/null && ./a.out"
+                "gcc": "mv # #.c && gcc -o a.out #.c > /dev/null && ./a.out",
+                "g++": "mv # #.cpp && g++ -o a.out #.cpp > /dev/null && ./a.out"
             }
         },
         "add_problem_processor": {

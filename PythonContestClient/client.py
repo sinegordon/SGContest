@@ -152,7 +152,8 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 break
 
     def select_file(self):
-        file_name = QtWidgets.QFileDialog.getOpenFileName(self, "Выбор файла с программой", None, "Python code (*.py);;C# code (*.cs)")[0]
+        file_name = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Выбор файла с программой", None, "Python code (*.py);;C# code (*.cs);;C++ code (*.cpp);;C code (*.c)")[0]
         if not file_name:
             return
         with open(file_name, 'r') as f:
