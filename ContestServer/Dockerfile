@@ -12,6 +12,8 @@ RUN apt-get update -q
 ENV TZ=Europe/Moscow
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get -qy install mono-complete
+RUN apt-get update -q
+RUN apt -y install build-essential
 RUN apt-get -y install python3
 RUN apt -y install python3-pip
 COPY requirements.txt .
