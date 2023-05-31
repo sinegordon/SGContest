@@ -1,0 +1,26 @@
+﻿@model ProblemsModel
+@{
+    ViewData["Title"] = "Задачи";
+}
+<div class="text-center">
+    <h1 class="display-4">Задачи</h1>
+</div>
+
+<div>
+    <table class="table table-striped table-hover">
+        <tr border="1">
+            <td>Варианты</td>
+            <td>Сложность</td>
+            <td>Описание</td>
+        </tr>
+        @foreach (var problem in Model.getListProblems())
+        {
+            <tr>
+                <td>@problem.getVariants()</td>
+                <td>@problem.Rating</td>
+                <td>@problem.Task</td>
+            </tr>
+        }
+    </table>
+
+</div>

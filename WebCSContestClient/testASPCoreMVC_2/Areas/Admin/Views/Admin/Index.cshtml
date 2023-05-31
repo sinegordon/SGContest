@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "Админка";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Панель администратора</h1>
+</div>
+
+<div>
+    <form method="get">
+    <p><button id="usersBtn" type="submit" method="get" asp-controller="Admin" asp-action="Users">Получить список студентов</button></p>
+    </form>
+    <br />
+    <form method="get">
+        <p><button id="problemsBtn" type="submit" method="get" asp-controller="Admin" asp-action="Problems">Получить список задач</button></p>
+    </form>
+    <br />
+    <form method="get">
+        <p><button id="addProblemsBtn" type="submit" method="get" asp-controller="Admin" asp-action="Index">Добавить задачи</button></p>
+    </form>
+    <br />
+
+</div>
+
