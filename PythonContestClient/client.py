@@ -16,14 +16,14 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.push_code.clicked.connect(self.do_process)
         self.user = ""
-        self.course = "test"
+        self.course = "first_test"
         self.test_code = ""
         self.user_data = {}
-        self.test_problerms_count1 = 1
-        self.test_problerms_count2 = 8
-        self.test_problerms_count3 = 1
-        self.addr = "http://cluster.vstu.ru:57888"
-        #self.addr = "http://localhost:57888"
+        self.test_problerms_count1 = 2
+        self.test_problerms_count2 = 0
+        self.test_problerms_count3 = 0
+        #self.addr = "http://cluster.vstu.ru:57888"
+        self.addr = "http://localhost:57888"
         self.spin_problem.setMinimum(1)
         self.spin_problem.valueChanged.connect(self.select_problem)
         self.state = 0
@@ -69,7 +69,9 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         if resp.status_code == 200 and "data" in resp.json():
             self.user_data = resp.json()["data"]["data"]
             self.edit_name.setEnabled(False)
-            last_result = self.user_data[self.course][0].get("last_result", "")
+            print(self.user_data)
+            if self.course in self.user_data:
+                last_result = self.user_data[self.course][0].get("last_result", "")
         if self.course not in self.user_data:
             id = str(uuid.uuid4())
             message = {"id": id, "mqtt_key": "234", "user": self.user, "type": "problems", "data_key": self.course, "action": "get_data"}
@@ -93,6 +95,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 prlist3 = random.sample(prmas3, self.test_problerms_count3)
                 prlist = prlist1 + prlist2 + prlist3
                 test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
+                print(test)
                 self.user_data[self.course] = test
                 message = {"user_name": self.user, "data": self.user_data}
                 resp = requests.post(f"{self.addr}/api/add_user_info", json=message)
@@ -104,13 +107,14 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         id = str(uuid.uuid4())
         mqtt_key = '123'
         language = self.edit_language.currentText()
-        course = 'test'
+        course = self.course
         problem = self.spin_problem.value()
         variant = str(self.spin_variant.value())
         code = self.test_code
+        print(self.user_data)
         message = {'id': id, 'mqtt_key': mqtt_key, 'user': self.user,
                     'language': language, 'course': course, 'action': 'test_problem',
-                    'problem': self.get_problem_number(self.user_data["test"][problem - 1]), 'variant': variant, 'code': code}
+                    'problem': self.get_problem_number(self.user_data[self.course][problem - 1]), 'variant': variant, 'code': code}
         resp = requests.post(f'{self.addr}/api/add_message', json=message)
         if not resp.ok:
             self.text_code.setPlainText("Не удалось отправить задачу")
@@ -137,12 +141,14 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                              and 'test_in' in result['result'][key] \
                              and result['result'][key]['score'] == 0:
                                 bad_in += f"{i}) " + str(result['result'][key]['test_in'].strip()) + "\n"
+                                if "timed out" in result['result'][key]['test_out']:
+                                    bad_in += "Таймаут" + "\n"
                                 i += 1
                                 # Показываем только первую ошибку
                                 break
                     last_result = f"Задача проверена.\nРезультат:\nНабрано {result['result']['res_score']} баллов из {result['result']['max_res_score']} возможных.\n{bad_in}"
-                    self.user_data["test"][problem - 1]["last_result"] = last_result
-                    self.text_code.setPlainText(self.user_data["test"][problem - 1]["task"] + "\n-------\n" + last_result)
+                    self.user_data[self.course][problem - 1]["last_result"] = last_result
+                    self.text_code.setPlainText(self.user_data[self.course][problem - 1]["task"] + "\n-------\n" + last_result)
                     self.statusbar.showMessage("")
                     message = {"user_name": self.user, "data": self.user_data}
                     requests.post(f"{self.addr}/api/add_user_info", json=message)

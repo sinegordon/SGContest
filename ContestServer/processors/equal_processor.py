@@ -59,11 +59,12 @@ class Processor(BaseProcessor):
                 test_in = test['in']
                 test_out = test['out']
                 test_score = test['score']
+                max_time = test.get('time', 10)
                 max_res_score += test_score
                 run_str = (self.languages_config[message['language']]).replace("#", fname)
                 p = Popen(run_str, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)    
                 try:
-                    outs, errs = p.communicate(input=str.encode(test_in), timeout=30)
+                    outs, errs = p.communicate(input=str.encode(test_in), timeout=max_time)
                     outs = outs.decode("utf-8").rstrip()
                     print(f'Test input - {test_in}')
                     print(f'Program output - {outs}')
