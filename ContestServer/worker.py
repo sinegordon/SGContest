@@ -21,20 +21,20 @@ def start_worker(**kwargs):
 
 
 class WorkerHandle:
-    '''It runs worker in another process and communicate with it using service and data queues'''
+    """It runs worker in another process and communicate with it using service and data queues"""
 
     def __init__(self, config: Dict[Any, Any], queue: Queue):
         self.queue = queue
         self.service_queue : Queue = Queue()
         self.process_handle : Optional[Process] = None
         self.results : Dict[str, Any] = Manager().dict()
-        self._config = config  # config on-the-fly update is not supported, so it's private
+        self._config = config  # config on-the-fly update is not supported, so it"s private
 
     def start(self):
         if self.process_handle is not None:
-            raise Exception('Worker is already running')
+            raise Exception("Worker is already running")
             return
-        kwargs = {'config': self._config, 'queue': self.queue, 'service_queue': self.service_queue, 'results': self.results}
+        kwargs = {"config": self._config, "queue": self.queue, "service_queue": self.service_queue, "results": self.results}
         self.process_handle = Process(target=start_worker, kwargs=kwargs)
         return self.process_handle.start()
 
@@ -58,25 +58,25 @@ class Worker(Dispatcher):
         self.service_queue = service_queue
         self.results = results
         self.config = config
-        self.processors_root = Path(config['processors_root'])
+        self.processors_root = Path(config["processors_root"])
         self.processors : Dict[str, Processor] = {}
-        for name, cfg in config['processors'].items():
+        for name, cfg in config["processors"].items():
             self.add_processor(name, cfg)
     
     def is_dispatchable(self, method: str) -> bool:
-        return not method.startswith('_')
+        return not method.startswith("_")
 
     def _load_processor(self, name: str, config: Config) -> Optional[Processor]:
         try:
-            location = self.processors_root / (config['type'] + '.py')
-            module_spec = importlib.util.spec_from_file_location(f'processors.{name}', location)
+            location = self.processors_root / (config["type"] + ".py")
+            module_spec = importlib.util.spec_from_file_location(f"processors.{name}", location)
             module = importlib.util.module_from_spec(module_spec)
             module_spec.loader.exec_module(module)
             processor = module.Processor(name, config)
-            logging.debug(f'{name} successfully loaded with configuration: {config}')
+            logging.debug(f"{name} successfully loaded with configuration: {config}")
             return processor
         except Exception as err:
-            logging.debug(f'{name} is failed to load: {err}')
+            logging.debug(f"{name} is failed to load: {err}")
         return None
 
     def _run(self) -> None:
@@ -99,19 +99,23 @@ class Worker(Dispatcher):
     def process_message(self, message: Dict[str, Any]) -> None:
         timeout = 60
         pid = current_process().pid
-        str_out = f'PID = {pid}. Got message - {message}'
+        str_out = f"PID = {pid}. Got message - {message}"
         print(str_out)
-        message['timestamp'] = int(time.time())
+        message_id = message["id"]
+        message["timestamp"] = int(time.time())
+        result = dict()
         for name, p in self.processors.items():
             try:
                 res = p.process(message, self.config)
                 if res is not None:
-                    self.results[res['message']['id']] = res
+                    result[name] = res
             except Exception as err:
                 print(p.name, err)
+        self.results[message_id] = result
+        print(f"Result fot ID = {message_id}: {self.results[message_id]}")
 
     def add_processor(self, name: str, cfg: Config) -> None:
-        cfg.setdefault('service', self.config.get('service'))
+        cfg.setdefault("service", self.config.get("service"))
         p = self._load_processor(name, cfg)
         if p is not None:
             self.processors[name] = p

@@ -131,22 +131,24 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 async with session.post(f'{self.addr}/api/get_message_result', json=message) as resp:
                     result = await resp.json()
                 if result is not None and 'error' not in result:
-                    if result['result']['max_res_score'] == result['result']['res_score']:
+                    print(result)
+                    res = result['result']['equal_processor']
+                    if res['max_res_score'] == res['res_score']:
                         bad_in = ""
                     else:
                         bad_in = "Ошибочные результаты получены на следующих входных данных:\n"
                         i = 1
-                        for key in result['result']:
-                            if isinstance(result['result'][key], type(result['result'])) \
-                             and 'test_in' in result['result'][key] \
-                             and result['result'][key]['score'] == 0:
-                                bad_in += f"{i}) " + str(result['result'][key]['test_in'].strip()) + "\n"
-                                if "timed out" in result['result'][key]['test_out']:
+                        for key in res:
+                            if isinstance(res[key], type(res)) \
+                             and 'test_in' in res[key] \
+                             and res[key]['score'] == 0:
+                                bad_in += f"{i}) " + str(res[key]['test_in'].strip()) + "\n"
+                                if "timed out" in res[key]['test_out']:
                                     bad_in += "Таймаут" + "\n"
                                 i += 1
                                 # Показываем только первую ошибку
                                 break
-                    last_result = f"Задача проверена.\nРезультат:\nНабрано {result['result']['res_score']} баллов из {result['result']['max_res_score']} возможных.\n{bad_in}"
+                    last_result = f"Задача проверена.\nРезультат:\nНабрано {res['res_score']} баллов из {res['max_res_score']} возможных.\n{bad_in}"
                     self.user_data[self.course][problem - 1]["last_result"] = last_result
                     self.text_code.setPlainText(self.user_data[self.course][problem - 1]["task"] + "\n-------\n" + last_result)
                     self.statusbar.showMessage("")

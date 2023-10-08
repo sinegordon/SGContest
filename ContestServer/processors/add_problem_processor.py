@@ -75,7 +75,7 @@ class Processor(BaseProcessor):
             transaction_id = collection.insert_one(json_data).inserted_id
             self.log(f'MongoDB response: {transaction_id}.')
             del json_data['_id']
-            return json_data
+            return problem_dict
         except Exception as err:
             self.log(f'Process error: {str(err)}')
             return None
