@@ -62,23 +62,26 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         if self.user == "":
             self.text_code.setPlainText("Задайте имя студента!")
             return
-        message = {"user_name": self.user}
+        id = str(uuid.uuid4())
+        message = {"jsonrpc": "2.0", "id": id,
+                "method": "get_user_info", "params": {"user_name": "*"}}
         resp = requests.post(
-            f"{self.addr}/api/get_user_info", json=message)
+            f"{self.addr}/api/run", json=message)
         last_result = ""
-        if resp.status_code == 200 and "data" in resp.json():
-            self.user_data = resp.json()["data"]["data"]
+        if resp.status_code == 200 and "resul" in resp.json():
+            self.user_data = resp.json()["result"]["data"]
             self.edit_name.setEnabled(False)
             print(self.user_data)
             if self.course in self.user_data:
                 last_result = self.user_data[self.course][0].get("last_result", "")
         if self.course not in self.user_data:
             id = str(uuid.uuid4())
-            message = {"id": id, "mqtt_key": "234", "user": self.user, "type": "problems", "data_key": self.course, "action": "get_data"}
-            resp = requests.post(
-                f"{self.addr}/api/get_courses_data", json=message)
-            if resp.status_code == 200 and "data" in resp.json():
-                problems = resp.json()["data"]["problems"]
+            params = {"mqtt_key": "234", "user": self.user, "type": "problems", "data_key": self.course, "action": "get_data"}
+            id = str(uuid.uuid4())
+            message = {"jsonrpc": "2.0", "id": id, "method": "get_courses_data", "params": params}
+            resp = requests.post(f"{self.addr}/api/run", json=message)
+            if resp.status_code == 200 and "result" in resp.json():
+                problems = resp.json()["result"]["problems"]
                 prmas1 = []
                 prmas2 = []
                 prmas3 = []
@@ -97,8 +100,10 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
                 print(test)
                 self.user_data[self.course] = test
-                message = {"user_name": self.user, "data": self.user_data}
-                resp = requests.post(f"{self.addr}/api/add_user_info", json=message)
+                params = {"user_name": self.user, "data": self.user_data}
+                id = str(uuid.uuid4())
+                message = {"jsonrpc": "2.0", "id": id, "method": "add_user_info", "params": params}
+                resp = requests.post(f"{self.addr}/api/run", json=message)
         self.spin_problem.setValue(1)
         if last_result != "": last_result = "\n-----\n" + last_result
         self.text_code.setPlainText(self.user_data[self.course][0]["task"] + last_result)
@@ -112,23 +117,25 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         variant = str(self.spin_variant.value())
         code = self.test_code
         print(self.user_data)
-        message = {'id': id, 'mqtt_key': mqtt_key, 'user': self.user,
+        params = {'mqtt_key': mqtt_key, 'user': self.user,
                     'language': language, 'course': course, 'action': 'test_problem',
                     'problem': self.get_problem_number(self.user_data[self.course][problem - 1]), 'variant': variant, 'code': code}
-        resp = requests.post(f'{self.addr}/api/add_message', json=message)
+        message = {"jsonrpc": "2.0", "id": id, "method": "add_message", "params": params}
+        resp = requests.post(f"{self.addr}/api/run", json=message)
         if not resp.ok:
             self.text_code.setPlainText("Не удалось отправить задачу")
             return
         self.text_code.setPlainText("Задача успешно отправлена. Ожидаем проверки.")
-        message = {'id': id}
         flag = True
         count = 0
         b = time.time()
+        message = {"jsonrpc": "2.0", "id": id,
+                   "method": "get_message_result", "params": {}}
         while flag:
             count += 1
             # self.statusbar.showMessage(f"Выполняется попытка №{count}.")
             async with aiohttp.ClientSession() as session:
-                async with session.post(f'{self.addr}/api/get_message_result', json=message) as resp:
+                async with session.post(f'{self.addr}/api/run', json=message) as resp:
                     result = await resp.json()
                 if result is not None and 'error' not in result:
                     print(result)
@@ -152,8 +159,10 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                     self.user_data[self.course][problem - 1]["last_result"] = last_result
                     self.text_code.setPlainText(self.user_data[self.course][problem - 1]["task"] + "\n-------\n" + last_result)
                     self.statusbar.showMessage("")
-                    message = {"user_name": self.user, "data": self.user_data}
-                    requests.post(f"{self.addr}/api/add_user_info", json=message)
+                    params = {"user_name": self.user, "data": self.user_data}
+                    message = {"jsonrpc": "2.0", "id": str(uuid.uuid4()),
+                            "method": "add_user_info", "params": params}
+                    resp = requests.post(f"{self.addr}/api/run", json=message)
                     break
             if time.time() - b > 30:
                 self.text_code.setPlainText("Задача не была проверена за отведенное время. Попробуйте еще раз.")

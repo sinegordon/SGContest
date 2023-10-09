@@ -7,6 +7,7 @@ from datetime import datetime
 from processors import BaseProcessor
 import resource
 from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
+import uuid
 
 
 class Processor(BaseProcessor):
@@ -61,9 +62,14 @@ class Processor(BaseProcessor):
                 test_score = test['score']
                 max_time = test.get('time', 10)
                 max_res_score += test_score
-                run_str = (self.languages_config[message['language']]).replace("#", fname)
-                p = Popen(run_str, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)    
+                run_strs = self.languages_config[message['language']]
                 try:
+                    for s in run_strs[:-1]:
+                        run_str = s.replace("#", fname)
+                        p = Popen(run_str, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+                        outs, errs = p.communicate(input=str.encode(test_in))
+                    run_str = run_strs[-1].replace("#", fname)
+                    p = Popen(run_str, shell=True, stdout=PIPE, stdin=PIPE, stderr=STDOUT)
                     outs, errs = p.communicate(input=str.encode(test_in), timeout=max_time)
                     outs = outs.decode("utf-8").rstrip()
                     print(f'Test input - {test_in}')

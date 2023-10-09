@@ -16,10 +16,10 @@
             "mongo_db_courses": "courses",
             "mongo_db_messages": "messages",
             "languages": {
-                "python": "python3 #",
-                "c#": "csc # > /dev/null && mono #.exe",
-                "c": "mv # #.c && gcc -o a.out #.c > /dev/null && ./a.out",
-                "c++": "mv # #.cpp && g++ -o a.out #.cpp > /dev/null && ./a.out"
+                "python": ["python3 #"],
+                "c#": ["csc # > /dev/null",  "mono #.exe"],
+                "c": ["mv # #.c 2> /dev/null && gcc -o a.out #.c > /dev/null",  "./a.out"],
+                "c++": ["mv # #.cpp 2> /dev/null && g++ -o a.out #.cpp > /dev/null", "./a.out"]
             }
         },
         "add_problem_processor": {
