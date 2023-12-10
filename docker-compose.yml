@@ -10,9 +10,7 @@ services:
       - ./contest_server.json:/app/config.json
   mongo:
     restart: always
-    image: mongo
-    ports:
-      - "27017:27017"
+    image: mongo:4.4.6
     environment:
       - MONGO_DATA_DIR=/data/db
     volumes:
