@@ -23,7 +23,7 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.test_problerms_count2 = 0
         self.test_problerms_count3 = 0
         #self.addr = "http://cluster.vstu.ru:57888"
-        self.addr = "http://localhost:57888"
+        self.addr = "http://62.76.72.55:57888"
         self.spin_problem.setMinimum(1)
         self.spin_problem.valueChanged.connect(self.select_problem)
         self.state = 0
