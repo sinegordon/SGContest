@@ -10,6 +10,7 @@ class Run():
 
     def on_post(self, req, resp):
         try:
+            resp.status = falcon.HTTP_200
             message = req.media
             if "id" not in message:
                 resp.body = json.dumps({"jsonrpc": "2.0", "id": None, "error": {"code": -1, "message": "Unknown message ID"}})
@@ -26,7 +27,7 @@ class Run():
             resp.body = getattr(pool, method)(id, params)
             resp.status = falcon.HTTP_200
         except Exception as err:
-            resp.body = json.dumps({"jsonrpc": "2.0", "id": id, "error":{"code": -31, "message": str(err)}})
+            resp.body = json.dumps({"jsonrpc": "2.0", "id": id, "error": {"code": -31, "message": str(err)}})
             resp.status = falcon.HTTP_500
             print(f'App error: {str(err)}')
 
