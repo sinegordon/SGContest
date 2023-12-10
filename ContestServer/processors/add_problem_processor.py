@@ -13,6 +13,7 @@ class Processor(BaseProcessor):
         client = MongoClient(config['mongo_host'], config['mongo_port'])
         self.db_courses = client[config['mongo_db_courses']]
         self.db_messages = client[config['mongo_db_messages']]
+        self.name = name
 
     def process(self, message, config=None):        
         if isinstance(config, dict):
@@ -21,6 +22,7 @@ class Processor(BaseProcessor):
             config = self.config
 
         try:
+            print(f"Processor: {self.name}")
             need_keys = ('id', 'mqtt_key', 'user', 'type', 'course', 'problem', 'variant', 'tests', "action")
             if not all(k in message for k in need_keys):
                 return None
