@@ -25,7 +25,6 @@ class Run():
                 return
             method = message["method"]
             resp.body = getattr(pool, method)(id, params)
-            resp.status = falcon.HTTP_200
         except Exception as err:
             resp.body = json.dumps({"jsonrpc": "2.0", "id": id, "error": {"code": -31, "message": str(err)}})
             resp.status = falcon.HTTP_500
