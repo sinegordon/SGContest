@@ -16,12 +16,12 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.push_code.clicked.connect(self.do_process)
         self.user = ""
-        self.course = "first_test"
+        self.course = "digital_test"
         self.test_code = ""
         self.user_data = {}
         self.test_problerms_count1 = 2
-        self.test_problerms_count2 = 0
-        self.test_problerms_count3 = 0
+        self.test_problerms_count2 = 2
+        self.test_problerms_count3 = 2
         #self.addr = "http://cluster.vstu.ru:57888"
         self.addr = "http://62.76.72.55:57888"
         self.spin_problem.setMinimum(1)
@@ -64,11 +64,11 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             return
         id = str(uuid.uuid4())
         message = {"jsonrpc": "2.0", "id": id,
-                "method": "get_user_info", "params": {"user_name": "*"}}
+                "method": "get_user_info", "params": {"user_name": self.user}}
         resp = requests.post(
             f"{self.addr}/api/run", json=message)
         last_result = ""
-        if resp.status_code == 200 and "resul" in resp.json():
+        if resp.status_code == 200 and "result" in resp.json():
             self.user_data = resp.json()["result"]["data"]
             self.edit_name.setEnabled(False)
             print(self.user_data)
