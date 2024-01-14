@@ -16,12 +16,12 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)
         self.push_code.clicked.connect(self.do_process)
         self.user = ""
-        self.course = "digital_test"
+        self.course = "kate_test"
         self.test_code = ""
         self.user_data = {}
-        self.test_problerms_count1 = 2
-        self.test_problerms_count2 = 2
-        self.test_problerms_count3 = 2
+        self.test_problerms_count1 = 1
+        self.test_problerms_count2 = 0
+        self.test_problerms_count3 = 0
         #self.addr = "http://cluster.vstu.ru:57888"
         self.addr = "http://62.76.72.55:57888"
         self.spin_problem.setMinimum(1)
