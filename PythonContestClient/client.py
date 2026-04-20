@@ -1,13 +1,40 @@
 import sys
-from PyQt5 import QtWidgets
+
+from PyQt5 import QtCore, QtWidgets
+
 import design
-import uuid
-import requests
-import aiohttp
-import asyncio
-import time
-import random
-import json
+from api import ContestApiClient, ContestApiError
+from services import ContestClientService
+
+
+class CheckSolutionWorker(QtCore.QObject):
+    finished = QtCore.pyqtSignal(str)
+    failed = QtCore.pyqtSignal(str)
+
+    def __init__(self, service, problem_index, variant, language, code):
+        super().__init__()
+        self.service = service
+        self.problem_index = problem_index
+        self.variant = variant
+        self.language = language
+        self.code = code
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        try:
+            result = self.service.submit_solution(
+                problem_index=self.problem_index,
+                variant=self.variant,
+                language=self.language,
+                code=self.code,
+            )
+        except ContestApiError as err:
+            self.failed.emit(str(err))
+            return
+        except Exception as err:
+            self.failed.emit(f"Неожиданная ошибка: {err}")
+            return
+        self.finished.emit(result)
 
 
 class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
@@ -15,168 +42,178 @@ class ClientApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.push_code.clicked.connect(self.do_process)
-        self.user = ""
-        self.course = "kate_test"
-        self.test_code = ""
-        self.user_data = {}
-        self.test_problerms_count1 = 1
-        self.test_problerms_count2 = 0
-        self.test_problerms_count3 = 0
-        #self.addr = "http://cluster.vstu.ru:57888"
-        self.addr = "http://62.76.72.55:57888"
+        self.push_reset.clicked.connect(self.reset_session)
         self.spin_problem.setMinimum(1)
         self.spin_problem.valueChanged.connect(self.select_problem)
+        self.spin_variant.setMinimum(1)
+        self.settings = QtCore.QSettings("SGContest", "PythonContestClient")
+        self.progress = QtWidgets.QProgressBar(self)
+        self.progress.setRange(0, 0)
+        self.progress.setVisible(False)
+        self.statusbar.addPermanentWidget(self.progress)
+
+        self.restore_settings()
+        self.api_client = ContestApiClient(self.edit_server.text().strip())
+        self.service = ContestClientService(self.api_client, course=self.edit_course.text().strip())
+
         self.state = 0
-
-    # Ищем среди ключей первый числовой - он для этого словаря номер задачи
-    def get_problem_number(self, data):
-        return int([key for key in data.keys() if key.isnumeric()][0])
-
-    # Ищем среди ключей первый числовой совпадающий с данным и возващаем его индекс
-    def get_problem_index(self, data, pr):
-        return int([i for i, key in enumerate(data.keys()) if int(key) == pr][0])
+        self.test_code = ""
+        self.worker_thread = None
+        self.worker = None
 
     def do_process(self):
         if self.state == 0:
-            self.get_user_data()
-            if self.course in self.user_data:
-                self.state = 1
-                self.push_code.setText("Загрузить и проверить код")
-                self.spin_problem.setMaximum(len(self.user_data[self.course]))
+            self.load_user()
         elif self.state == 1:
             self.select_file()
 
+    def apply_runtime_settings(self):
+        server_url = self.edit_server.text().strip()
+        course = self.edit_course.text().strip()
+        if not server_url:
+            raise ValueError("Задайте адрес сервера!")
+        if not course:
+            raise ValueError("Задайте код курса!")
+        self.api_client = ContestApiClient(server_url)
+        self.service = ContestClientService(self.api_client, course=course)
+
+    def restore_settings(self):
+        self.edit_name.setText(self.settings.value("user_name", self.edit_name.text(), type=str))
+        self.edit_server.setText(self.settings.value("server_url", self.edit_server.text(), type=str))
+        self.edit_course.setText(self.settings.value("course", self.edit_course.text(), type=str))
+        language = self.settings.value("language", self.edit_language.currentText(), type=str)
+        language_index = self.edit_language.findText(language)
+        if language_index >= 0:
+            self.edit_language.setCurrentIndex(language_index)
+
+    def save_settings(self):
+        self.settings.setValue("user_name", self.edit_name.text().strip())
+        self.settings.setValue("server_url", self.edit_server.text().strip())
+        self.settings.setValue("course", self.edit_course.text().strip())
+        self.settings.setValue("language", self.edit_language.currentText())
+
+    def set_busy(self, is_busy, message=""):
+        self.progress.setVisible(is_busy)
+        self.push_code.setEnabled(not is_busy)
+        self.push_reset.setEnabled(not is_busy and self.state == 1)
+        self.statusbar.showMessage(message if is_busy else "")
+
+    def load_user(self):
+        user_name = self.edit_name.text().strip()
+        try:
+            self.apply_runtime_settings()
+            self.save_settings()
+            problems = self.service.load_user_data(user_name)
+        except ValueError as err:
+            self.text_code.setPlainText(str(err))
+            return
+        except ContestApiError as err:
+            self.text_code.setPlainText(f"Ошибка загрузки данных: {err}")
+            return
+
+        self.edit_name.setEnabled(False)
+        self.edit_server.setEnabled(False)
+        self.edit_course.setEnabled(False)
+        self.state = 1
+        self.push_reset.setEnabled(True)
+        self.push_code.setText("Загрузить и проверить код")
+        self.spin_problem.setMaximum(len(problems))
+        self.spin_problem.setValue(1)
+        self.show_problem(0)
+
+    def show_problem(self, problem_index):
+        self.spin_variant.setMaximum(self.service.get_problem_variant_count(problem_index))
+        self.spin_variant.setValue(1)
+        self.text_code.setPlainText(self.service.get_problem_statement(problem_index))
+
     def select_problem(self):
-        max_spin = self.test_problerms_count1 + self.test_problerms_count2 + self.test_problerms_count3
         if self.state != 1:
             return
-        i = self.spin_problem.value()
-        if i <= max_spin and i > 0:
-            last_result = self.user_data[self.course][i-1].get("last_result", "")
-            if last_result != "": last_result = "\n-----\n" + last_result
-            self.text_code.setPlainText(self.user_data[self.course][i-1]["task"] + last_result)
-
-    def get_user_data(self):
-        id = str(uuid.uuid4())
-        self.user = self.edit_name.text()
-        if self.user == "":
-            self.text_code.setPlainText("Задайте имя студента!")
-            return
-        id = str(uuid.uuid4())
-        message = {"jsonrpc": "2.0", "id": id,
-                "method": "get_user_info", "params": {"user_name": self.user}}
-        resp = requests.post(
-            f"{self.addr}/api/run", json=message)
-        last_result = ""
-        if resp.status_code == 200 and "result" in resp.json():
-            self.user_data = resp.json()["result"]["data"]
-            self.edit_name.setEnabled(False)
-            print(self.user_data)
-            if self.course in self.user_data:
-                last_result = self.user_data[self.course][0].get("last_result", "")
-        if self.course not in self.user_data:
-            id = str(uuid.uuid4())
-            params = {"mqtt_key": "234", "user": self.user, "type": "problems", "data_key": self.course, "action": "get_data"}
-            id = str(uuid.uuid4())
-            message = {"jsonrpc": "2.0", "id": id, "method": "get_courses_data", "params": params}
-            resp = requests.post(f"{self.addr}/api/run", json=message)
-            if resp.status_code == 200 and "result" in resp.json():
-                problems = resp.json()["result"]["problems"]
-                prmas1 = []
-                prmas2 = []
-                prmas3 = []
-                for problem in problems:
-                    pr = [x for x in problem.keys() if x.isnumeric()][0]
-                    if 'rating' in problem and problem['rating'] == 1:
-                        prmas1.append(pr)
-                    elif 'rating' in problem and problem['rating'] == 2:
-                        prmas2.append(pr)
-                    elif 'rating' in problem and problem['rating'] == 3:
-                        prmas3.append(pr)
-                prlist1 = random.sample(prmas1, self.test_problerms_count1)
-                prlist2 = random.sample(prmas2, self.test_problerms_count2)
-                prlist3 = random.sample(prmas3, self.test_problerms_count3)
-                prlist = prlist1 + prlist2 + prlist3
-                test = [p for p in problems if len([x for x in prlist if x in p]) > 0]
-                print(test)
-                self.user_data[self.course] = test
-                params = {"user_name": self.user, "data": self.user_data}
-                id = str(uuid.uuid4())
-                message = {"jsonrpc": "2.0", "id": id, "method": "add_user_info", "params": params}
-                resp = requests.post(f"{self.addr}/api/run", json=message)
-        self.spin_problem.setValue(1)
-        if last_result != "": last_result = "\n-----\n" + last_result
-        self.text_code.setPlainText(self.user_data[self.course][0]["task"] + last_result)
-
-    async def check_problem(self):
-        id = str(uuid.uuid4())
-        mqtt_key = '123'
-        language = self.edit_language.currentText()
-        course = self.course
-        problem = self.spin_problem.value()
-        variant = str(self.spin_variant.value())
-        code = self.test_code
-        print(self.user_data)
-        params = {'mqtt_key': mqtt_key, 'user': self.user,
-                    'language': language, 'course': course, 'action': 'test_problem',
-                    'problem': self.get_problem_number(self.user_data[self.course][problem - 1]), 'variant': variant, 'code': code}
-        message = {"jsonrpc": "2.0", "id": id, "method": "add_message", "params": params}
-        resp = requests.post(f"{self.addr}/api/run", json=message)
-        if not resp.ok:
-            self.text_code.setPlainText("Не удалось отправить задачу")
-            return
-        self.text_code.setPlainText("Задача успешно отправлена. Ожидаем проверки.")
-        flag = True
-        count = 0
-        b = time.time()
-        message = {"jsonrpc": "2.0", "id": id,
-                   "method": "get_message_result", "params": {}}
-        while flag:
-            count += 1
-            # self.statusbar.showMessage(f"Выполняется попытка №{count}.")
-            async with aiohttp.ClientSession() as session:
-                async with session.post(f'{self.addr}/api/run', json=message) as resp:
-                    result = await resp.json()
-                if result is not None and 'error' not in result:
-                    print(result)
-                    res = result['result']['equal_processor']
-                    if res['max_res_score'] == res['res_score']:
-                        bad_in = ""
-                    else:
-                        bad_in = "Ошибочные результаты получены на следующих входных данных:\n"
-                        i = 1
-                        for key in res:
-                            if isinstance(res[key], type(res)) \
-                             and 'test_in' in res[key] \
-                             and res[key]['score'] == 0:
-                                bad_in += f"{i}) " + str(res[key]['test_in'].strip()) + "\n"
-                                if "timed out" in res[key]['test_out']:
-                                    bad_in += "Таймаут" + "\n"
-                                i += 1
-                                # Показываем только первую ошибку
-                                break
-                    last_result = f"Задача проверена.\nРезультат:\nНабрано {res['res_score']} баллов из {res['max_res_score']} возможных.\n{bad_in}"
-                    self.user_data[self.course][problem - 1]["last_result"] = last_result
-                    self.text_code.setPlainText(self.user_data[self.course][problem - 1]["task"] + "\n-------\n" + last_result)
-                    self.statusbar.showMessage("")
-                    params = {"user_name": self.user, "data": self.user_data}
-                    message = {"jsonrpc": "2.0", "id": str(uuid.uuid4()),
-                            "method": "add_user_info", "params": params}
-                    resp = requests.post(f"{self.addr}/api/run", json=message)
-                    break
-            if time.time() - b > 30:
-                self.text_code.setPlainText("Задача не была проверена за отведенное время. Попробуйте еще раз.")
-                break
+        problem_index = self.spin_problem.value() - 1
+        if problem_index >= 0:
+            self.show_problem(problem_index)
 
     def select_file(self):
-        ext = self.edit_language.currentData()
+        extension = self.edit_language.currentData()
         file_name = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Выбор файла с программой", None, f"Code file ({ext})")[0]
+            self,
+            "Выбор файла с программой",
+            None,
+            f"Code file ({extension})",
+        )[0]
         if not file_name:
             return
-        with open(file_name, 'r') as f:
-            self.test_code = f.read()
-        asyncio.run(self.check_problem())
+        try:
+            with open(file_name, "r", encoding="utf-8") as file:
+                self.test_code = file.read()
+        except UnicodeDecodeError:
+            with open(file_name, "r", encoding="cp1251") as file:
+                self.test_code = file.read()
+        self.check_problem()
+
+    def check_problem(self):
+        if self.worker_thread is not None:
+            self.text_code.setPlainText("Проверка уже выполняется. Дождитесь завершения.")
+            return
+
+        self.save_settings()
+        self.text_code.setPlainText("Задача успешно отправлена. Ожидаем проверки.")
+        self.set_busy(True, "Проверка решения...")
+
+        self.worker_thread = QtCore.QThread(self)
+        self.worker = CheckSolutionWorker(
+            service=self.service,
+            problem_index=self.spin_problem.value() - 1,
+            variant=self.spin_variant.value(),
+            language=self.edit_language.currentText(),
+            code=self.test_code,
+        )
+        self.worker.moveToThread(self.worker_thread)
+        self.worker_thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.on_check_finished)
+        self.worker.failed.connect(self.on_check_failed)
+        self.worker.finished.connect(self.cleanup_worker)
+        self.worker.failed.connect(self.cleanup_worker)
+        self.worker_thread.start()
+
+    def on_check_finished(self, result_text):
+        self.statusbar.showMessage("Проверка завершена.")
+        self.text_code.setPlainText(
+            self.service.get_problem_statement(self.spin_problem.value() - 1)
+        )
+
+    def on_check_failed(self, message):
+        self.statusbar.showMessage("")
+        self.text_code.setPlainText(message)
+
+    def cleanup_worker(self, _message):
+        self.set_busy(False)
+        if self.worker_thread is not None:
+            self.worker_thread.quit()
+            self.worker_thread.wait()
+        self.worker = None
+        self.worker_thread = None
+
+    def reset_session(self):
+        if self.worker_thread is not None:
+            self.text_code.setPlainText("Дождитесь завершения текущей проверки.")
+            return
+        self.state = 0
+        self.test_code = ""
+        self.service.user_data = {}
+        self.service.user = ""
+        self.edit_name.setEnabled(True)
+        self.edit_server.setEnabled(True)
+        self.edit_course.setEnabled(True)
+        self.push_reset.setEnabled(False)
+        self.push_code.setEnabled(True)
+        self.push_code.setText("Загрузить вариант")
+        self.spin_problem.setValue(1)
+        self.spin_problem.setMaximum(99)
+        self.spin_variant.setValue(1)
+        self.spin_variant.setMaximum(99)
+        self.text_code.setPlainText("")
+        self.statusbar.showMessage("")
 
 
 def main():
@@ -186,5 +223,5 @@ def main():
     app.exec_()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

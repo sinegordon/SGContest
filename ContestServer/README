@@ -1,180 +1,234 @@
-СТРУКТУРА И ДОБАВЛЕНИЕ ЗАДАЧ
+CONTESTSERVER API
 
-Коллекция задач к курсу представляет собой набор json-документов вида:
+Сервер предоставляет один HTTP endpoint:
+
+- `POST /api/run`
+
+Все операции вызываются через JSON-RPC-подобный запрос.
+
+Формат запроса:
+
+```json
 {
-    "problem": <номер задачи, тип целый>,
-    "task": <условие задачи, тип строковый>,
-    "rating": <сложность задачи, тип целый, набор значений (1,2,3) по возрастанию сложности>
-    "type": <тип задачи (тип процессора для обработки - на данный момент только equal), тип строковый>,
-    "variants": <варианты задачи, тип json-документ, ключи - номера вариантов>
+  "jsonrpc": "2.0",
+  "id": "request-id",
+  "method": "get_courses_data",
+  "params": {}
+}
+```
+
+Обязательные поля верхнего уровня:
+
+- `id`
+- `method`
+- `params`
+
+Поддерживаемые `method`:
+
+- `add_message`
+- `get_message_result`
+- `get_courses_data`
+- `add_user_info`
+- `get_user_info`
+- `get_base_dump`
+- `clear_data`
+- `add_processor`
+
+Формат успешного ответа:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "request-id",
+  "result": {}
+}
+```
+
+Формат ответа с ошибкой:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "request-id",
+  "error": {
+    "code": -21,
+    "message": "Unknown message method!"
+  }
+}
+```
+
+Коды ошибок верхнего уровня:
+
+- `-1` отсутствует `id`
+- `-11` отсутствует `params`
+- `-21` отсутствует `method` или передан неподдерживаемый метод
+- `-31` внутренняя ошибка сервера
+
+Пример. Получить список курсов:
+
+```python
+import requests
+import uuid
+
+message = {
+    "jsonrpc": "2.0",
+    "id": str(uuid.uuid4()),
+    "method": "get_courses_data",
+    "params": {
+        "mqtt_key": "234",
+        "user": "2321",
+        "type": "courses",
+        "data_key": "",
+        "action": "get_data"
+    }
 }
 
-Каждый документ в "variants" имеет вид:
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
 
-{
-    "in": <Входная строка теста, тип строковый>,
-    "out": <Выходная строка теста, тип строковый>,
-    "time": <Ограничение времени на тест, тип целый>,
-    "score": <Количество баллов за успешное прохождение теста, тип целый>
+Пример. Отправить асинхронную задачу:
+
+```python
+import requests
+import uuid
+
+request_id = str(uuid.uuid4())
+
+message = {
+    "jsonrpc": "2.0",
+    "id": request_id,
+    "method": "add_message",
+    "params": {
+        "mqtt_key": "234",
+        "user": "2321",
+        "type": "problems",
+        "data_key": "test",
+        "action": "get_data"
+    }
 }
 
-Пример.
-Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.
-Возможное решение на языке Python:
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
 
-print(int(input()) + 1)
+Пример. Получить результат асинхронной задачи:
 
-Документ для задачи:
+```python
+import requests
+
+message = {
+    "jsonrpc": "2.0",
+    "id": request_id,
+    "method": "get_message_result",
+    "params": {}
+}
+
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
+
+СТРУКТУРА ЗАДАЧИ
+
+Коллекция задач курса представляет собой набор JSON-документов вида:
+
+```json
 {
-    "problem": 1,
-    "type": "equal",
-    "rating": 1,
-    "task": "Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.",
-    "variants":
-    {
-        "1":
-        { 
-            "1":
-            {
+  "problem": 1,
+  "task": "Текст условия",
+  "rating": 1,
+  "type": "equal",
+  "variants": {
+    "1": {
+      "1": {
+        "in": "1",
+        "out": "2",
+        "score": 10
+      }
+    }
+  }
+}
+```
+
+Описание полей:
+
+- `problem` номер задачи
+- `task` условие задачи
+- `rating` сложность
+- `type` тип обработчика задачи
+- `variants` варианты задачи
+
+Каждый тест внутри `variants` имеет вид:
+
+```json
+{
+  "in": "1",
+  "out": "2",
+  "time": 10,
+  "score": 10
+}
+```
+
+Пример добавления одного варианта задачи:
+
+```python
+import requests
+import uuid
+
+message = {
+    "jsonrpc": "2.0",
+    "id": str(uuid.uuid4()),
+    "method": "add_message",
+    "params": {
+        "mqtt_key": 123,
+        "user": "aasdd",
+        "type": "equal",
+        "course": "programming",
+        "problem": 3,
+        "rating": 1,
+        "variant": "1",
+        "action": "add_problem",
+        "task": "Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.",
+        "tests": {
+            "1": {
                 "in": "1",
                 "out": "2",
                 "score": 10
             },
-            "2": 
-            {
-                "in": "2",
-                "out": "3",
-                "score": 10
-            }
-        },
-        "2":
-        { 
-            "1":
-            {
-                "in": "4",
-                "out": "5",
-                "score": 10
-            },
-            "2": 
-            {
-                "in": "6",
-                "out": "7",
+            "2": {
+                "in": "7",
+                "out": "8",
                 "score": 10
             }
         }
     }
 }
 
-Пример запроса на добавление ОДНОГО варианта задачи в курс.
-Добавление нескольких вариантов пока не поддерживается!
-Если задачи нет, она вставится (как и курс).
-Если такой вариант у задачи есть - он заменится.
-Поле "task" (условие задачи) не обязательно - если оно есть, то условие вставится или обновится.
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
 
+Пример получения дампа базы сообщений:
+
+```python
 import requests
-json = {
-        "id": "12345", 
-        "mqtt_key": 123,
-        "user": "aasdd", 
-        "type": "equal", 
-        "course": "programming", 
-        "problem": 3,
-        "rating": 1,
-        "variant": "1",
-        "action": "add_problem",
-        "task": "Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.",
-        "tests":
-            { 
-                "1":
-                {
-                    "in": "1",
-                    "out": "2",
-                    "score": 10
-                },
-                "2": 
-                {
-                    "in": "7",
-                    "out": "8",
-                    "score": 10
-                }
-            }
-     }
-r = requests.post("http://localhost:57888/api/add_message", json=json)
-print(r)
+import uuid
 
-ПОЛУЧИТЬ ДАННЫЕ О СПИСКЕ КОЛЛЕКЦИЙ (АСИНХРОННЫЙ ВАРИАНТ)
-
-Сначала запрос на выполенение работы
-id = str(uuid.uuid4())
-message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "courses", "data_key": "","action": "get_data" }
-resp = requests.post("http://localhost:57888/api/add_message", json=message)
-
-Потом запрос на проверку результата запроса
-message = { "id": id }
-resp = requests.post("http://localhost:57888/api/get_message_result", json=message)
-
-Пример ответа
-{
-    'message': {'id': '0f54f511-6152-46c6-ab1d-12b393b861c9',
-    'mqtt_key': '234',
-    'user': '2321',
-    'type': 'courses',
-    'data_key': '',
-    'action': 'get_data',
-    'timestamp': 1669655171},
-    'result': {'courses': ['test']}
- }
-
-ПОЛУЧИТЬ ДАННЫЕ О СПИСКЕ КОЛЛЕКЦИЙ (СИНХРОННЫЙ ВАРИАНТ)
-
-id = str(uuid.uuid4())
-message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "courses", "data_key": "","action": "get_data" }
-resp = requests.post("http://localhost:57888/api/get_courses_data", json=message)
-Результат такой же как в асинхронном варианте.
-
-ПОЛУЧИТЬ ДАННЫЕ О СТУКТУРЕ КОЛЛЕКЦИИ (АСИНХРОННЫЙ ВАРИАНТ)
-
-Сначала запрос на выполенение работы
-id = str(uuid.uuid4())
-message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "problems", "data_key": "test", "action": "get_data" }
-resp = requests.post("http://localhost:57888/api/add_message", json=message)
-
-Потом запрос на проверку результата запроса
-message = { "id": id }
-resp = requests.post(
-    "http://localhost:57888/api/get_message_result", json=message)
-
-Пример ответа
-{'message': {'id': 'bb56af03-e83e-493e-9a2e-1a73bf80a1f4',
-  'mqtt_key': '234',
-  'user': '2321',
-  'type': 'problems',
-  'data_key': 'test',
-  'action': 'get_data',
-  'timestamp': 1669822065},
- 'result': 
-    {'problems': 
-        [
-            {'1': ['1', '2'], 'rating': 1,
-            'task': 'Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.'},
-            {'2': ['1', '2'], 'rating': 1,
-            'task': 'Задача - написать алгоритм, который получает на вход целое число и возвращает число на 1 большее.'}
-        ]
+message = {
+    "jsonrpc": "2.0",
+    "id": str(uuid.uuid4()),
+    "method": "get_base_dump",
+    "params": {
+        "date": "2022-12-18",
+        "processor_name": "equal_processor",
+        "admin_key": "1111111"
     }
 }
 
-ПОЛУЧИТЬ ДАННЫЕ О СТУКТУРЕ КОЛЛЕКЦИИ (СИНХРОННЫЙ ВАРИАНТ)
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
 
-id = str(uuid.uuid4())
-message = { "id": id, "mqtt_key": "234", "user": "2321", "type": "problems", "data_key": "test", "action": "get_data" }
-resp = requests.post("http://localhost:57888/api/get_courses_data", json=message)
-Результат такой же как в асинхронном варианте.
+Примечание по совместимости:
 
-
-ПОЛУЧИТЬ ДАМП БАЗЫ СООБЩЕНИЙ ЗА КАКУЮ-ТО ДАТУ
-
-message = { "date": "2022-12-18", "processor_name": "equal_processor", "admin_key": "1111111" }
-resp = requests.post(
-    "http://localhost:57888/api/get_base_dump", json=message)
-
-
+Ранее в документации встречались примеры с отдельными endpoint'ами вроде `/api/add_message` и `/api/get_courses_data`. В текущей реализации `ContestServer` используется только `/api/run`.
