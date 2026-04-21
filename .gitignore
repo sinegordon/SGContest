@@ -1,3 +1,4 @@
 ./dockerdata/*
 ./dockerdata/db/*
 /dockerdata/
+.env

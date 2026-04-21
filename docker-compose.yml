@@ -16,3 +16,16 @@ services:
     volumes:
         - ./dockerdata/db:/data/db
     command: mongod
+  django-client:
+    restart: always
+    build: DjangoContestClient
+    depends_on:
+      - contest
+    ports:
+      - "0.0.0.0:8000:8000"
+    volumes:
+      - ./DjangoContestClient:/app
+    environment:
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
