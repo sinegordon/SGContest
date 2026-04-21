@@ -3,6 +3,8 @@ services:
   contest:
     restart: always
     build: ContestServer
+    depends_on:
+      - mongo
     ports:
       - "0.0.0.0:57888:8000"
     volumes:
@@ -21,11 +23,13 @@ services:
     build: DjangoContestClient
     depends_on:
       - contest
+      - mongo
     ports:
       - "0.0.0.0:8000:8000"
     volumes:
       - ./DjangoContestClient:/app
     environment:
+      - CONTEST_SERVER_URL=http://contest:8000
       - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
       - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}

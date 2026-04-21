@@ -24,6 +24,9 @@ class ContestService:
     def get_courses_data(self, data_type, data_key):
         return self.course_repository.get_courses_data(data_type, data_key)
 
+    def create_course(self, course_name):
+        return self.course_repository.create_course(course_name)
+
     def clear_data(self, data_type, data_key, problem_number=None):
         return self.course_repository.clear_data(data_type, data_key, problem_number)
 

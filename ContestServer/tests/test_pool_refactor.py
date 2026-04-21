@@ -38,6 +38,9 @@ if "services" not in sys.modules:
         def get_courses_data(self, data_type, data_key):
             return {}
 
+        def create_course(self, course_name):
+            return {}
+
         def clear_data(self, data_type, data_key):
             return {}
 
@@ -62,6 +65,7 @@ class FakeService:
         self.base_dump = [{"x": 1}]
         self.user_info = {"user_name": "alice"}
         self.courses_data = {"courses": ["test"]}
+        self.created_course = {"python": "Created!"}
         self.cleared_data = {"course": "Droped!"}
 
     def get_message_result(self, request_id):
@@ -86,6 +90,10 @@ class FakeService:
     def clear_data(self, data_type, data_key, problem_number=None):
         self.calls.append(("clear_data", data_type, data_key, problem_number))
         return self.cleared_data
+
+    def create_course(self, course_name):
+        self.calls.append(("create_course", course_name))
+        return self.created_course
 
     def add_processor(self, name):
         self.calls.append(("add_processor", name))
@@ -134,7 +142,7 @@ class WorkerPoolRefactorTests(unittest.TestCase):
         resp = pool.get_base_dump("1", {"date": "2024-01-01", "processor_name": "equal"})
 
         self.assertEqual(
-            resp,
+            json.loads(resp),
             {
                 "jsonrpc": "2.0",
                 "id": "1",
@@ -231,6 +239,31 @@ class WorkerPoolRefactorTests(unittest.TestCase):
         self.assertEqual(
             json.loads(resp),
             {"jsonrpc": "2.0", "result": {"course": "Droped!"}, "id": "1"},
+        )
+
+    def test_create_course_success(self):
+        pool = self.make_pool()
+
+        resp = pool.create_course("1", {"course": "python"})
+
+        self.assertEqual(
+            json.loads(resp),
+            {"jsonrpc": "2.0", "result": {"python": "Created!"}, "id": "1"},
+        )
+        self.assertEqual(pool.service.calls[0], ("create_course", "python"))
+
+    def test_create_course_validation(self):
+        pool = self.make_pool()
+
+        resp = pool.create_course("1", {})
+
+        self.assertEqual(
+            json.loads(resp),
+            {
+                "jsonrpc": "2.0",
+                "id": "1",
+                "error": {"code": -13, "message": "Need course key!"},
+            },
         )
 
     def test_clear_problem_success(self):

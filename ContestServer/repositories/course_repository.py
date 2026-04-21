@@ -33,6 +33,15 @@ class CourseRepository:
         print(f"Data - {result}")
         return result
 
+    def create_course(self, course_name):
+        if not course_name:
+            raise ValueError("Need course name for creating course")
+        existing_names = self.db_courses.list_collection_names()
+        if course_name in existing_names:
+            return {course_name: "Already exists"}
+        self.db_courses.create_collection(course_name)
+        return {course_name: "Created!"}
+
     def clear_data(self, data_type, data_key, problem_number=None):
         data = {}
         if data_type == "course":

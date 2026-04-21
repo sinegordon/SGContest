@@ -26,11 +26,7 @@ class WorkerPool:
         processor_name = message["processor_name"]
         admin_key = message.get("admin_key", "")
         if admin_key != self.config["admin_key"]:
-            return {
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "error": {"code": -3, "message": "Need admin_key for process request!"},
-            }
+            return rpc_error(request_id, -3, "Need admin_key for process request!")
         data = self.service.get_base_dump(processor_name, date)
         return rpc_result(request_id, data)
 
@@ -68,6 +64,17 @@ class WorkerPool:
         except Exception as err:
             print(f"Process error: {str(err)}")
             return rpc_error(request_id, -10, str(err))
+
+    def create_course(self, request_id, message):
+        course_name = message.get("course")
+        if not course_name:
+            return rpc_error(request_id, -13, "Need course key!")
+        try:
+            data = self.service.create_course(course_name)
+        except Exception as err:
+            print(f"Process error: {str(err)}")
+            return rpc_error(request_id, -14, str(err))
+        return rpc_result(request_id, data)
 
     def clear_data(self, request_id, message):
         try:

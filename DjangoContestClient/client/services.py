@@ -91,18 +91,8 @@ class ContestApiClient:
             },
         )
 
-    def clear_problem(self, user_name, course, problem_number):
-        return self.call(
-            "clear_data",
-            {
-                "mqtt_key": "234",
-                "user": user_name,
-                "type": "problem",
-                "data_key": course,
-                "problem": int(problem_number),
-                "action": "clear_data",
-            },
-        )
+    def create_course(self, course_name):
+        return self.call("create_course", {"course": course_name})
 
     def get_base_dump(self, date, processor_name, admin_key):
         return self.call(
@@ -148,6 +138,9 @@ class ContestApiClient:
         )
         return self.poll_message_result(request_id)
 
+    def create_or_update_user(self, user_name, data):
+        return self.add_user_info(user_name, data)
+
 
 def get_problem_number(problem_data):
     return int([key for key in problem_data.keys() if key.isnumeric()][0])
@@ -170,8 +163,32 @@ def select_problem_set(problems, counts_by_rating, rng=None):
     for rating, count in counts_by_rating.items():
         if count <= 0:
             continue
-        selected_numbers.extend(rng.sample(grouped[rating], count))
+        available_numbers = grouped.get(rating, [])
+        if not available_numbers:
+            continue
+        sample_size = min(count, len(available_numbers))
+        selected_numbers.extend(rng.sample(available_numbers, sample_size))
     return [problem for problem in problems if any(number in problem for number in selected_numbers)]
+
+
+def get_problem_variant_keys(problem):
+    numeric_key = [key for key in problem.keys() if key.isnumeric()][0]
+    variants = problem.get(numeric_key, {})
+    return sorted(str(variant) for variant in variants.keys())
+
+
+def assign_selected_variants(problems, rng=None):
+    rng = rng or random
+    changed = False
+    for problem in problems:
+        variant_keys = get_problem_variant_keys(problem)
+        if not variant_keys:
+            continue
+        selected_variant = str(problem.get("selected_variant", "")).strip()
+        if selected_variant not in variant_keys:
+            problem["selected_variant"] = rng.choice(variant_keys)
+            changed = True
+    return changed
 
 
 def format_check_result(result):
@@ -194,14 +211,14 @@ def format_check_result(result):
 
 
 class ContestWebService:
-    def __init__(self, api_client, course="kate_test", random_generator=None):
+    def __init__(self, api_client, course="kate_test", random_generator=None, problem_counts=None):
         self.api_client = api_client
         self.course = course
         self.random = random_generator or random
         self.user_data = {}
         self.user = ""
         self.language = "python"
-        self.problem_counts = {1: 1, 2: 0, 3: 0}
+        self.problem_counts = problem_counts or {1: 1, 2: 0, 3: 0}
 
     def load_user_data(self, user_name):
         if not user_name:
@@ -216,7 +233,10 @@ class ContestWebService:
             problems_response = self.api_client.get_courses_data(user_name, self.course)
             problems = problems_response["result"]["problems"]
             selected = select_problem_set(problems, self.problem_counts, self.random)
+            assign_selected_variants(selected, self.random)
             self.user_data[self.course] = selected
+            self.api_client.add_user_info(user_name, self.user_data)
+        elif assign_selected_variants(self.user_data[self.course], self.random):
             self.api_client.add_user_info(user_name, self.user_data)
 
         return self.user_data[self.course]
@@ -226,8 +246,20 @@ class ContestWebService:
 
     def get_problem_variant_count(self, problem_index):
         problem = self.user_data[self.course][problem_index]
-        numeric_key = [key for key in problem.keys() if key.isnumeric()][0]
-        return max(1, len(problem[numeric_key]))
+        return max(1, len(get_problem_variant_keys(problem)))
+
+    def get_selected_variant(self, problem_index):
+        problem = self.user_data[self.course][problem_index]
+        selected_variant = str(problem.get("selected_variant", "")).strip()
+        if selected_variant:
+            return selected_variant
+        variant_keys = get_problem_variant_keys(problem)
+        if not variant_keys:
+            return "1"
+        selected_variant = self.random.choice(variant_keys)
+        problem["selected_variant"] = selected_variant
+        self.api_client.add_user_info(self.user, self.user_data)
+        return selected_variant
 
     def get_problem_statement(self, problem_index):
         problem = self.user_data[self.course][problem_index]
@@ -236,7 +268,7 @@ class ContestWebService:
             last_result = "\n-----\n" + last_result
         return problem["task"] + last_result
 
-    def submit_solution(self, problem_index, variant, language, code):
+    def submit_solution(self, problem_index, language, code):
         request_id = str(uuid.uuid4())
         params = {
             "mqtt_key": "123",
@@ -245,7 +277,7 @@ class ContestWebService:
             "course": self.course,
             "action": "test_problem",
             "problem": get_problem_number(self.user_data[self.course][problem_index]),
-            "variant": str(variant),
+            "variant": self.get_selected_variant(problem_index),
             "code": code,
         }
         self.api_client.add_message(params, request_id=request_id)
@@ -299,12 +331,6 @@ def parse_tests_text(raw_text):
     return tests
 
 
-def parse_problem_tests(raw_text, raw_json):
-    if raw_json.strip():
-        return parse_tests_json(raw_json)
-    return parse_tests_text(raw_text)
-
-
 def parse_bulk_problems_json(raw_json):
     try:
         data = json.loads(raw_json)
@@ -312,4 +338,16 @@ def parse_bulk_problems_json(raw_json):
         raise ContestApiError(f"Некорректный JSON файла задач: {err}") from err
     if not isinstance(data, list):
         raise ContestApiError("Файл задач должен содержать JSON-массив.")
+    return data
+
+
+def parse_optional_json_object(raw_json, field_name):
+    if not raw_json.strip():
+        return {}
+    try:
+        data = json.loads(raw_json)
+    except json.JSONDecodeError as err:
+        raise ContestApiError(f"Некорректный JSON для поля '{field_name}': {err}") from err
+    if not isinstance(data, dict):
+        raise ContestApiError(f"Поле '{field_name}' должно содержать JSON-объект.")
     return data

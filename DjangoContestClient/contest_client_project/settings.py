@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 
@@ -63,3 +64,5 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CONTEST_SERVER_URL = os.getenv("CONTEST_SERVER_URL", "http://62.76.72.55:57888")

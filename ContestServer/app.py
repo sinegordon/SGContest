@@ -16,6 +16,7 @@ SUPPORTED_METHODS = (
     "get_base_dump",
     "clear_data",
     "add_processor",
+    "create_course",
 )
 
 
@@ -52,23 +53,23 @@ class Run:
             resp.status = falcon.HTTP_200
             message = req.media
             if "id" not in message:
-                resp.body = self._error_response(None, -1, "Unknown message ID")
+                resp.text = self._error_response(None, -1, "Unknown message ID")
                 return
             request_id = message["id"]
             if "params" not in message:
-                resp.body = self._error_response(request_id, -11, "Unknown message params!")
+                resp.text = self._error_response(request_id, -11, "Unknown message params!")
                 return
             params = message["params"]
             if "method" not in message:
-                resp.body = self._error_response(request_id, -21, "Unknown message method!")
+                resp.text = self._error_response(request_id, -21, "Unknown message method!")
                 return
             method = message["method"]
             if method not in self.allowed_methods or not hasattr(self.pool, method):
-                resp.body = self._error_response(request_id, -21, "Unknown message method!")
+                resp.text = self._error_response(request_id, -21, "Unknown message method!")
                 return
-            resp.body = getattr(self.pool, method)(request_id, params)
+            resp.text = getattr(self.pool, method)(request_id, params)
         except Exception as err:
-            resp.body = self._error_response(request_id, -31, str(err))
+            resp.text = self._error_response(request_id, -31, str(err))
             resp.status = falcon.HTTP_500
             print(f"App error: {str(err)}")
 

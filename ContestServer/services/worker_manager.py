@@ -21,11 +21,12 @@ class WorkerManager:
 
     def get_message_result(self, request_id):
         for worker in self.workers:
-            for result_id in worker.results:
+            for result_id in list(worker.results.keys()):
                 if request_id == result_id:
                     result = worker.results[result_id].copy()
                     del worker.results[result_id]
-                    self.added_problems_id_list.remove(result_id)
+                    if result_id in self.added_problems_id_list:
+                        self.added_problems_id_list.remove(result_id)
                     return result, result_id
         return None, None
 

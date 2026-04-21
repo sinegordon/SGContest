@@ -6,292 +6,764 @@
   <title>Contest Ops</title>
   <style>
     :root {
-      --bg: #f3efe7;
-      --panel: #fffdfa;
-      --ink: #1e1a16;
-      --accent: #28536b;
-      --warn: #a63d40;
-      --line: #d8d0c4;
+      --bg: #eef1f5;
+      --bg-accent: #d9e2ec;
+      --panel: #fbfcfe;
+      --panel-strong: #ffffff;
+      --ink: #14212b;
+      --muted: #5c6b78;
+      --line: #ccd6e0;
+      --line-strong: #aebcca;
+      --accent: #1f5b84;
+      --accent-soft: #d8e9f7;
+      --success: #e7f4ea;
+      --success-ink: #245135;
+      --error: #fde9e7;
+      --error-ink: #7e2f2b;
+      --warn: #a94442;
+      --warn-soft: #f7dfdc;
+      --shadow: 0 24px 60px rgba(31, 49, 68, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      background: linear-gradient(180deg, #efe7da 0%, var(--bg) 100%);
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
       color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(31, 91, 132, 0.12), transparent 30%),
+        linear-gradient(180deg, #f5f7fa 0%, var(--bg) 48%, #e7edf3 100%);
     }
+
+    a {
+      color: inherit;
+    }
+
     .wrap {
-      max-width: 1100px;
+      max-width: 1360px;
       margin: 0 auto;
-      padding: 32px 20px 48px;
+      padding: 28px 20px 56px;
     }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 18px;
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--accent);
+      font-size: 15px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.8fr);
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .hero-panel,
+    .status-panel,
+    .section,
+    .result-card,
+    .message {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(174, 188, 202, 0.7);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      padding: 26px 28px;
+      background:
+        linear-gradient(135deg, rgba(31, 91, 132, 0.08), rgba(255, 255, 255, 0.96)),
+        rgba(255, 255, 255, 0.9);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(20, 33, 43, 0.06);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-panel p {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .status-panel {
       padding: 20px;
-      box-shadow: 0 18px 45px rgba(71, 52, 34, 0.08);
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .status-title {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status-item {
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+    }
+
+    .status-label {
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .status-value {
+      font-size: 18px;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .message-stack {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .message {
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      font-size: 15px;
+    }
+
+    .message.success {
+      background: linear-gradient(180deg, #f5fbf6 0%, var(--success) 100%);
+      color: var(--success-ink);
+      border-color: rgba(74, 136, 94, 0.28);
+    }
+
+    .message.error {
+      background: linear-gradient(180deg, #fff8f7 0%, var(--error) 100%);
+      color: var(--error-ink);
+      border-color: rgba(169, 68, 66, 0.22);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .column {
+      display: grid;
+      gap: 20px;
+    }
+
+    .section {
+      padding: 22px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
       margin-bottom: 18px;
     }
-    .grid {
+
+    .section-title {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .section-copy {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 620px;
+    }
+
+    .section-badge {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .subgrid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .subgrid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .mini-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .mini-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .mini-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    form {
+      margin: 0;
+    }
+
+    .fields {
       display: grid;
       gap: 14px;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
+
+    .fields.compact {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .field {
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
     label {
       display: block;
       margin-bottom: 6px;
-      font-size: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    input, button, select {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font: inherit;
-      background: white;
-    }
+
+    input,
+    select,
+    textarea,
     button {
-      background: var(--accent);
-      color: white;
-      border: 0;
-      cursor: pointer;
+      width: 100%;
+      font: inherit;
+      border-radius: var(--radius-sm);
     }
+
+    input,
+    select,
+    textarea {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      padding: 11px 13px;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(31, 91, 132, 0.12);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 124px;
+      resize: vertical;
+    }
+
+    .field small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .actions,
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      box-shadow: 0 12px 24px rgba(31, 91, 132, 0.18);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #174969;
+    }
+
     button.warn {
       background: var(--warn);
+      box-shadow: 0 12px 24px rgba(169, 68, 66, 0.18);
     }
+
+    button.warn:hover {
+      background: #8e3735;
+    }
+
+    .quick-actions form,
+    .actions form {
+      flex: 1 1 220px;
+    }
+
+    .quick-actions button {
+      height: 100%;
+    }
+
+    .danger-block {
+      background: linear-gradient(180deg, #fff8f7 0%, var(--warn-soft) 100%);
+      border: 1px solid rgba(169, 68, 66, 0.22);
+    }
+
+    .results {
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-card {
+      padding: 18px 18px 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .result-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
     pre {
+      margin: 0;
+      padding: 15px;
+      border-radius: var(--radius-md);
+      background: #f6f9fc;
+      border: 1px solid #d6e1ea;
       white-space: pre-wrap;
-      background: #fbf8f2;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
       overflow: auto;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #233443;
     }
-    .nav {
-      margin-bottom: 16px;
+
+    @media (max-width: 1120px) {
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
     }
-    .nav a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-    .message {
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-    }
-    .success {
-      background: #e8f5e9;
-    }
-    .error {
-      background: #fdecea;
+
+    @media (max-width: 760px) {
+      .wrap {
+        padding: 20px 14px 40px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .hero-panel,
+      .section,
+      .status-panel {
+        padding: 18px;
+      }
+
+      .subgrid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="nav">
-      <a href="{% url 'index' %}">← Вернуться в клиент</a>
+    <div class="topbar">
+      <a class="back-link" href="{% url 'index' %}">← Вернуться в клиент</a>
+      <a class="back-link" href="{% url 'ops_results' %}">Последние результаты →</a>
     </div>
 
-    <h1>Contest Service Ops</h1>
+    <div class="hero">
+      <div class="hero-panel">
+        <span class="eyebrow">Contest Service Operations</span>
+        <h1>Панель управления contest</h1>
+        <p>Спокойная системная админка для курсов, пользователей, задач и сервисных операций. Все основные действия собраны в одном месте, а текущий контекст подключения всегда перед глазами.</p>
+      </div>
+
+      <div class="status-panel">
+        <div class="status-title">Текущий контекст</div>
+        <div class="status-item">
+          <div class="status-label">Сервер</div>
+          <div class="status-value">{{ request.session.ops_server_url|default:settings_form.server_url.value|default:"Не задан" }}</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Техпользователь</div>
+          <div class="status-value">{{ request.session.ops_service_user|default:"admin" }}</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Текущий курс</div>
+          <div class="status-value">{{ request.session.ops_course|default:"Не выбран" }}</div>
+        </div>
+      </div>
+    </div>
 
     {% if messages %}
-      {% for message in messages %}
-        <div class="message {{ message.tags }}">{{ message }}</div>
-      {% endfor %}
+      <div class="message-stack">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
     {% endif %}
 
-    <div class="card">
-      <h2>Подключение</h2>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="save_ops_settings">
-        <div class="grid">
-          {% for field in settings_form %}
+    <div class="layout">
+      <div class="column">
+        <section class="section">
+          <div class="section-header">
             <div>
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
+              <h2 class="section-title">Подключение</h2>
+              <p class="section-copy">Настройки серверного контура и базовый контекст ops-сессии.</p>
             </div>
-          {% endfor %}
-        </div>
-        <div style="margin-top: 16px;">
-          <button type="submit">Сохранить настройки</button>
-        </div>
-      </form>
-    </div>
+            <span class="section-badge">Session</span>
+          </div>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_ops_settings">
+            <div class="fields">
+              {% for field in settings_form %}
+                <div class="field">
+                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                </div>
+              {% endfor %}
+            </div>
+            <div class="actions">
+              <button type="submit">Сохранить настройки</button>
+            </div>
+          </form>
+        </section>
 
-    <div class="card">
-      <h2>Быстрые действия</h2>
-      <div class="grid">
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="list_courses">
-          <button type="submit">Показать курсы</button>
-        </form>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="list_users">
-          <button type="submit">Показать пользователей</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Работа с курсом</h2>
-      <div class="grid">
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="show_problems">
-          <label for="{{ course_form.course.id_for_label }}">{{ course_form.course.label }}</label>
-          {{ course_form.course }}
-          <button type="submit" style="margin-top: 12px;">Показать задачи</button>
-        </form>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="clear_course">
-          <label for="clear_course_input">Курс</label>
-          <input id="clear_course_input" name="course" value="{{ course_form.course.value|default:'' }}">
-          <button type="submit" class="warn" style="margin-top: 12px;">Очистить курс</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Создание и обновление задачи</h2>
-      <p>Для быстрых правок можно использовать построчный формат тестов. JSON-режим остаётся доступен для сложных случаев.</p>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="save_problem">
-        <div class="grid">
-          {% for field in problem_form %}
+        <section class="section">
+          <div class="section-header">
             <div>
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% if field.help_text %}
-                <small>{{ field.help_text }}</small>
-              {% endif %}
+              <h2 class="section-title">Каталог и навигация</h2>
+              <p class="section-copy">Быстрые действия для обзора курсов, пользователей и содержимого выбранного курса.</p>
             </div>
-          {% endfor %}
-        </div>
-        <div style="margin-top: 16px;">
-          <button type="submit">Сохранить задачу</button>
-        </div>
-      </form>
-    </div>
+            <span class="section-badge">Browse</span>
+          </div>
 
-    <div class="card">
-      <h2>Пакетная загрузка задач из JSON</h2>
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="bulk_import">
-        <div class="grid">
-          {% for field in bulk_import_form %}
+          <div class="quick-actions">
+            <form method="post" target="_blank" rel="noopener">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="list_courses">
+              <button type="submit">Показать курсы</button>
+            </form>
+            <form method="post" target="_blank" rel="noopener">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="list_users">
+              <button type="submit">Показать пользователей</button>
+            </form>
+          </div>
+
+          <div class="subgrid" style="margin-top: 16px;">
+            <div class="mini-card">
+              <h3>Просмотр курса</h3>
+              <p>Подтягивает задачи и делает этот курс текущим контекстом для остальных операций.</p>
+              <form method="post" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="show_problems">
+                <div class="field">
+                  <label for="{{ course_form.course.id_for_label }}">{{ course_form.course.label }}</label>
+                  {{ course_form.course }}
+                </div>
+                <div class="actions">
+                  <button type="submit">Показать задачи</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="mini-card danger-block">
+              <h3>Очистка курса</h3>
+              <p>Удаляет все задачи курса. Используй только если нужно полностью сбросить набор.</p>
+              <form method="post" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="clear_course">
+                <div class="field">
+                  <label for="clear_course_input">Курс</label>
+                  <input id="clear_course_input" name="course" value="{{ course_form.course.value|default:'' }}">
+                </div>
+                <div class="actions">
+                  <button type="submit" class="warn">Очистить курс</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
             <div>
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
+              <h2 class="section-title">Курсы и пользователи</h2>
+              <p class="section-copy">Создание базовых сущностей перед наполнением задачами и назначением студентов.</p>
             </div>
-          {% endfor %}
-        </div>
-        <div style="margin-top: 16px;">
-          <button type="submit">Импортировать набор задач</button>
-        </div>
-      </form>
-    </div>
+            <span class="section-badge">Setup</span>
+          </div>
 
-    <div class="card">
-      <h2>Удаление задачи</h2>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="delete_problem">
-        <div class="grid">
-          {% for field in delete_problem_form %}
+          <div class="subgrid">
+            <div class="mini-card">
+              <h3>Создать курс</h3>
+              <p>Создаёт новую коллекцию курса и делает её активной в текущей ops-сессии.</p>
+              <form method="post" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_course">
+                {% for field in create_course_form %}
+                  <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                  </div>
+                {% endfor %}
+                <div class="actions">
+                  <button type="submit">Создать курс</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="mini-card">
+              <h3>Создать пользователя</h3>
+              <p>Подходит и для пустого профиля, и для начальной загрузки пользовательских данных в JSON.</p>
+              <form method="post" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_user">
+                {% for field in create_user_form %}
+                  <div class="field{% if field.name == 'user_data_json' %} full{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <small>{{ field.help_text }}</small>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+                <div class="actions">
+                  <button type="submit">Сохранить пользователя</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
             <div>
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
+              <h2 class="section-title">Настройки набора задач</h2>
+              <p class="section-copy">Для каждого курса можно отдельно задать, сколько задач каждого уровня будет выдаваться студенту при первичной загрузке.</p>
             </div>
-          {% endfor %}
-        </div>
-        <div style="margin-top: 16px;">
-          <button type="submit" class="warn">Удалить задачу</button>
-        </div>
-      </form>
-    </div>
+            <span class="section-badge">Rules</span>
+          </div>
 
-    <div class="card">
-      <h2>Дамп сообщений</h2>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="get_dump">
-        <div class="grid">
-          {% for field in dump_form %}
+          <div class="subgrid single">
+            <div class="mini-card">
+              <h3>Параметры курса</h3>
+              <p>Эти значения используются при формировании персонального набора задач для нового студента в выбранном курсе.</p>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="load_course_settings">
+                <div class="fields compact">
+                  <div class="field">
+                    <label for="{{ course_form.course.id_for_label }}">Курс</label>
+                    {{ course_form.course }}
+                    <small>Сначала подтяни состав курса, чтобы списки по уровням отражали реальное число задач.</small>
+                  </div>
+                </div>
+                <div class="actions">
+                  <button type="submit">Загрузить данные курса</button>
+                </div>
+              </form>
+              <div class="fields compact" style="margin-top: 16px;">
+                <div class="field">
+                  <label>Задач уровня 1 в курсе</label>
+                  <input value="{{ course_rating_limits.1 }}" readonly>
+                </div>
+                <div class="field">
+                  <label>Задач уровня 2 в курсе</label>
+                  <input value="{{ course_rating_limits.2 }}" readonly>
+                </div>
+                <div class="field">
+                  <label>Задач уровня 3 в курсе</label>
+                  <input value="{{ course_rating_limits.3 }}" readonly>
+                </div>
+              </div>
+              <form method="post" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_course_settings">
+                <div class="fields compact">
+                  {% for field in course_settings_form %}
+                    <div class="field">
+                      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                      {{ field }}
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="actions">
+                  <button type="submit">Сохранить параметры курса</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
             <div>
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
+              <h2 class="section-title">Сброс набора задач у студента</h2>
+              <p class="section-copy">Удаляет только назначенный набор задач по выбранному курсу из профиля студента. При следующей загрузке курс будет набран заново по текущим правилам.</p>
             </div>
-          {% endfor %}
-        </div>
-        <div style="margin-top: 16px;">
-          <button type="submit">Получить дамп</button>
-        </div>
-      </form>
+            <span class="section-badge">Reset</span>
+          </div>
+
+          <div class="subgrid single">
+            <div class="mini-card">
+              <h3>Сбросить курс у студента</h3>
+              <p>Полезно, когда изменились правила набора задач или состав курса и нужно пересобрать выдачу без создания нового пользователя.</p>
+              <form method="post" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reset_user_course">
+                <div class="fields compact">
+                  {% for field in reset_user_course_form %}
+                    <div class="field">
+                      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                      {{ field }}
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="actions">
+                  <button type="submit">Сбросить набор задач</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Загрузка задач</h2>
+            </div>
+            <span class="section-badge">Problems</span>
+          </div>
+
+          <div class="subgrid single">
+            <div class="mini-card">
+              <h3>Пакетная загрузка задач</h3>
+              <p>Импортирует JSON-набор в выбранный курс и сразу показывает его содержимое в блоке результатов справа.</p>
+              <form method="post" enctype="multipart/form-data" target="_blank" rel="noopener">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="bulk_import">
+                <div class="fields compact">
+                  {% for field in bulk_import_form %}
+                    <div class="field">
+                      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                      {{ field }}
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="actions">
+                  <button type="submit">Импортировать набор задач</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="column">
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Сервисные операции</h2>
+              <p class="section-copy">Выгрузка дампа по процессору и дате. Ответ скачивается JSON-файлом.</p>
+            </div>
+            <span class="section-badge">Support</span>
+          </div>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="get_dump">
+            <div class="fields compact">
+              {% for field in dump_form %}
+                <div class="field">
+                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                </div>
+              {% endfor %}
+            </div>
+            <div class="actions">
+              <button type="submit">Скачать дамп</button>
+            </div>
+          </form>
+        </section>
+      </div>
     </div>
-
-    {% if ops_results.courses is not None %}
-      <div class="card">
-        <h2>Курсы</h2>
-        <pre>{{ ops_results.courses }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.problems is not None %}
-      <div class="card">
-        <h2>Задачи курса</h2>
-        <pre>{{ ops_results.problems }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.users is not None %}
-      <div class="card">
-        <h2>Пользователи</h2>
-        <pre>{{ ops_results.users }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.dump is not None %}
-      <div class="card">
-        <h2>Дамп сообщений</h2>
-        <pre>{{ ops_results.dump }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.clear_result is not None %}
-      <div class="card">
-        <h2>Результат очистки</h2>
-        <pre>{{ ops_results.clear_result }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.problem_save_result is not None %}
-      <div class="card">
-        <h2>Результат сохранения задачи</h2>
-        <pre>{{ ops_results.problem_save_result }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.problem_delete_result is not None %}
-      <div class="card">
-        <h2>Результат удаления задачи</h2>
-        <pre>{{ ops_results.problem_delete_result }}</pre>
-      </div>
-    {% endif %}
-
-    {% if ops_results.bulk_import_result is not None %}
-      <div class="card">
-        <h2>Результат пакетного импорта</h2>
-        <pre>{{ ops_results.bulk_import_result }}</pre>
-      </div>
-    {% endif %}
   </div>
 </body>
 </html>

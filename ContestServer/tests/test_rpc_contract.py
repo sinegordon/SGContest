@@ -68,6 +68,9 @@ class StubPool:
     def add_processor(self, request_id, params):
         return self._response(request_id, "add_processor", params)
 
+    def create_course(self, request_id, params):
+        return self._response(request_id, "create_course", params)
+
 
 class FailingPool:
     def add_message(self, request_id, params):
@@ -77,7 +80,7 @@ class FailingPool:
 class RunResourceTests(unittest.TestCase):
     def call_resource(self, resource, payload):
         req = SimpleNamespace(media=payload)
-        resp = SimpleNamespace(status=None, body=None)
+        resp = SimpleNamespace(status=None, text=None)
         resource.on_post(req, resp)
         return resp
 
@@ -93,6 +96,7 @@ class RunResourceTests(unittest.TestCase):
                 "get_base_dump",
                 "clear_data",
                 "add_processor",
+                "create_course",
             },
         )
 
@@ -106,7 +110,7 @@ class RunResourceTests(unittest.TestCase):
         )
 
         self.assertEqual(resp.status, "200 OK")
-        self.assertEqual(json.loads(resp.body)["result"]["method"], "add_message")
+        self.assertEqual(json.loads(resp.text)["result"]["method"], "add_message")
         self.assertEqual(pool.calls, [("add_message", "1", params)])
 
     def test_get_message_result_smoke(self):
@@ -118,7 +122,7 @@ class RunResourceTests(unittest.TestCase):
         )
 
         self.assertEqual(resp.status, "200 OK")
-        self.assertEqual(json.loads(resp.body)["result"]["method"], "get_message_result")
+        self.assertEqual(json.loads(resp.text)["result"]["method"], "get_message_result")
 
     def test_get_courses_data_smoke(self):
         pool = StubPool()
@@ -136,7 +140,7 @@ class RunResourceTests(unittest.TestCase):
         )
 
         self.assertEqual(resp.status, "200 OK")
-        self.assertEqual(json.loads(resp.body)["result"]["method"], "get_courses_data")
+        self.assertEqual(json.loads(resp.text)["result"]["method"], "get_courses_data")
 
     def test_add_user_info_smoke(self):
         pool = StubPool()
@@ -148,7 +152,19 @@ class RunResourceTests(unittest.TestCase):
         )
 
         self.assertEqual(resp.status, "200 OK")
-        self.assertEqual(json.loads(resp.body)["result"]["method"], "add_user_info")
+        self.assertEqual(json.loads(resp.text)["result"]["method"], "add_user_info")
+
+    def test_create_course_smoke(self):
+        pool = StubPool()
+        resource = Run(pool)
+        params = {"course": "python"}
+        resp = self.call_resource(
+            resource,
+            {"jsonrpc": "2.0", "id": "4c", "method": "create_course", "params": params},
+        )
+
+        self.assertEqual(resp.status, "200 OK")
+        self.assertEqual(json.loads(resp.text)["result"]["method"], "create_course")
 
     def test_get_user_info_smoke(self):
         pool = StubPool()
@@ -160,7 +176,7 @@ class RunResourceTests(unittest.TestCase):
         )
 
         self.assertEqual(resp.status, "200 OK")
-        self.assertEqual(json.loads(resp.body)["result"]["method"], "get_user_info")
+        self.assertEqual(json.loads(resp.text)["result"]["method"], "get_user_info")
 
     def test_missing_id_returns_rpc_error(self):
         pool = StubPool()
@@ -172,7 +188,7 @@ class RunResourceTests(unittest.TestCase):
 
         self.assertEqual(resp.status, "200 OK")
         self.assertEqual(
-            json.loads(resp.body),
+            json.loads(resp.text),
             {
                 "jsonrpc": "2.0",
                 "id": None,
@@ -190,7 +206,7 @@ class RunResourceTests(unittest.TestCase):
 
         self.assertEqual(resp.status, "200 OK")
         self.assertEqual(
-            json.loads(resp.body),
+            json.loads(resp.text),
             {
                 "jsonrpc": "2.0",
                 "id": "6",
@@ -208,7 +224,7 @@ class RunResourceTests(unittest.TestCase):
 
         self.assertEqual(resp.status, "200 OK")
         self.assertEqual(
-            json.loads(resp.body),
+            json.loads(resp.text),
             {
                 "jsonrpc": "2.0",
                 "id": "7",
@@ -226,7 +242,7 @@ class RunResourceTests(unittest.TestCase):
 
         self.assertEqual(resp.status, "200 OK")
         self.assertEqual(
-            json.loads(resp.body),
+            json.loads(resp.text),
             {
                 "jsonrpc": "2.0",
                 "id": "8",
@@ -243,7 +259,7 @@ class RunResourceTests(unittest.TestCase):
 
         self.assertEqual(resp.status, "500 Internal Server Error")
         self.assertEqual(
-            json.loads(resp.body),
+            json.loads(resp.text),
             {
                 "jsonrpc": "2.0",
                 "id": "9",

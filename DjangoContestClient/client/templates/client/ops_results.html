@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contest Ops Results</title>
+  <style>
+    :root {
+      --bg: #eef1f5;
+      --panel: rgba(255, 255, 255, 0.9);
+      --ink: #14212b;
+      --muted: #5c6b78;
+      --line: #ccd6e0;
+      --accent: #1f5b84;
+      --shadow: 0 24px 60px rgba(31, 49, 68, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(31, 91, 132, 0.12), transparent 30%),
+        linear-gradient(180deg, #f5f7fa 0%, var(--bg) 48%, #e7edf3 100%);
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .topbar a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 15px;
+    }
+    .hero, .result-card, .meta-card {
+      background: var(--panel);
+      border: 1px solid rgba(174, 188, 202, 0.7);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      padding: 24px 28px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(34px, 5vw, 52px);
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 760px;
+    }
+    .meta-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-bottom: 18px;
+    }
+    .meta-card {
+      padding: 16px 18px;
+      border-radius: var(--radius-lg);
+    }
+    .meta-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .meta-value {
+      font-size: 18px;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .results {
+      display: grid;
+      gap: 16px;
+    }
+    .result-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+    }
+    .result-card h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+    pre {
+      margin: 0;
+      padding: 15px;
+      border-radius: var(--radius-md);
+      background: #f6f9fc;
+      border: 1px solid #d6e1ea;
+      white-space: pre-wrap;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #233443;
+    }
+    @media (max-width: 760px) {
+      .wrap { padding: 20px 14px 40px; }
+      .topbar { flex-direction: column; }
+      .hero { padding: 18px; }
+      h1 { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a href="{% url 'ops' %}">← Вернуться в ops</a>
+      <a href="{% url 'index' %}">Вернуться в клиент →</a>
+    </div>
+
+    <div class="hero">
+      <h1>Результаты ops</h1>
+      <p>Здесь собраны результаты последнего административного действия. Страница отделена от формы управления, чтобы сам интерфейс ops оставался чистым и сосредоточенным на действиях.</p>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-card">
+        <div class="meta-label">Сервер</div>
+        <div class="meta-value">{{ ops_server_url }}</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-label">Техпользователь</div>
+        <div class="meta-value">{{ ops_service_user }}</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-label">Текущий курс</div>
+        <div class="meta-value">{{ ops_course|default:"Не выбран" }}</div>
+      </div>
+    </div>
+
+    <div class="results">
+      {% if ops_results.courses is not None %}
+        <div class="result-card">
+          <h2>Курсы</h2>
+          <pre>{{ ops_results.courses }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.problems is not None %}
+        <div class="result-card">
+          <h2>Задачи курса {{ ops_course }}</h2>
+          <pre>{{ ops_results.problems }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.users is not None %}
+        <div class="result-card">
+          <h2>Пользователи</h2>
+          <pre>{{ ops_results.users }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.clear_result is not None %}
+        <div class="result-card">
+          <h2>Результат очистки</h2>
+          <pre>{{ ops_results.clear_result }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.course_create_result is not None %}
+        <div class="result-card">
+          <h2>Результат создания курса</h2>
+          <pre>{{ ops_results.course_create_result }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.course_settings_result is not None %}
+        <div class="result-card">
+          <h2>Настройки набора задач</h2>
+          <pre>{{ ops_results.course_settings_result }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.reset_user_course_result is not None %}
+        <div class="result-card">
+          <h2>Сброс набора задач у студента</h2>
+          <pre>{{ ops_results.reset_user_course_result }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.user_create_result is not None %}
+        <div class="result-card">
+          <h2>Результат сохранения пользователя</h2>
+          <pre>{{ ops_results.user_create_result }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.bulk_import_result is not None %}
+        <div class="result-card">
+          <h2>Результат пакетного импорта</h2>
+          <pre>{{ ops_results.bulk_import_result }}</pre>
+        </div>
+      {% endif %}
+
+      {% if ops_results.courses is None and ops_results.problems is None and ops_results.users is None and ops_results.clear_result is None and ops_results.course_create_result is None and ops_results.course_settings_result is None and ops_results.reset_user_course_result is None and ops_results.user_create_result is None and ops_results.bulk_import_result is None %}
+        <div class="result-card">
+          <h2>Пока нет сохранённых результатов</h2>
+          <pre>Вернись в ops и выполни любое действие: просмотр курсов, импорт задач, создание пользователя или очистку курса.</pre>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

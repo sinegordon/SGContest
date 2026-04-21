@@ -84,6 +84,9 @@
     .message.error {
       background: #fdecea;
     }
+    .message.info {
+      background: #eef4ff;
+    }
     pre {
       white-space: pre-wrap;
       background: #fbf8f2;
@@ -91,6 +94,9 @@
       border-radius: 12px;
       padding: 16px;
       min-height: 220px;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -114,16 +120,23 @@
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="action" value="load_user">
+        <input type="hidden" name="server_url" value="{{ settings_form.server_url.value|default:'' }}">
+        <input type="hidden" name="language" value="{{ language|default:'python' }}">
         <div class="grid">
-          {% for field in settings_form %}
-            <div>
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% if field.errors %}
-                <div>{{ field.errors }}</div>
-              {% endif %}
-            </div>
-          {% endfor %}
+          <div>
+            <label for="{{ settings_form.user_name.id_for_label }}">{{ settings_form.user_name.label }}</label>
+            {{ settings_form.user_name }}
+            {% if settings_form.user_name.errors %}
+              <div>{{ settings_form.user_name.errors }}</div>
+            {% endif %}
+          </div>
+          <div>
+            <label for="{{ settings_form.course.id_for_label }}">{{ settings_form.course.label }}</label>
+            {{ settings_form.course }}
+            {% if settings_form.course.errors %}
+              <div>{{ settings_form.course.errors }}</div>
+            {% endif %}
+          </div>
         </div>
         <div class="actions" style="margin-top: 16px;">
           <button type="submit">Загрузить пользователя</button>
@@ -134,7 +147,7 @@
     {% if is_loaded %}
       <div class="card">
         <h2>Навигация</h2>
-        <p>Курс: <strong>{{ course }}</strong>. Всего задач: <strong>{{ problem_count }}</strong>.</p>
+        <p>Пользователь: <strong>{{ user_name }}</strong>. Курс: <strong>{{ course }}</strong>. Всего задач: <strong>{{ problem_count }}</strong>.</p>
         <div class="actions">
           <form method="post">
             {% csrf_token %}
@@ -152,40 +165,90 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2>Задача №{{ current_problem_index }}</h2>
-        <pre>{{ current_text }}</pre>
-      </div>
+      {% if has_problems %}
+        <div class="card">
+          <h2>Задача №{{ current_problem_index }}</h2>
+          <pre id="problem-text" data-base-text="{{ current_problem.task|escapejs }}">{{ current_text }}</pre>
+        </div>
 
-      <div class="card">
-        <h2>Проверка решения</h2>
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="submit_solution">
-          <div class="grid">
-            <div>
-              <label for="{{ submit_solution_form.variant.id_for_label }}">Вариант</label>
-              <select name="variant" id="{{ submit_solution_form.variant.id_for_label }}">
-                {% for variant in variant_range %}
-                  <option value="{{ variant }}">{{ variant }}</option>
-                {% endfor %}
-              </select>
+        <div class="card">
+          <h2>Проверка решения</h2>
+          <div id="async-status" class="message info hidden"></div>
+          <form method="post" enctype="multipart/form-data" id="solution-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit_solution">
+            <div class="grid">
+              <div>
+                <label for="{{ submit_solution_form.language.id_for_label }}">{{ submit_solution_form.language.label }}</label>
+                {{ submit_solution_form.language }}
+              </div>
+              <div>
+                <label for="{{ submit_solution_form.code_file.id_for_label }}">Файл с решением</label>
+                {{ submit_solution_form.code_file }}
+              </div>
             </div>
-            <div>
-              <label for="language_display">Язык</label>
-              <input id="language_display" value="{{ language }}" disabled>
+            <div class="actions" style="margin-top: 16px;">
+              <button type="submit" id="submit-solution-button">Загрузить и проверить код</button>
             </div>
-            <div>
-              <label for="{{ submit_solution_form.code_file.id_for_label }}">Файл с решением</label>
-              {{ submit_solution_form.code_file }}
-            </div>
-          </div>
-          <div class="actions" style="margin-top: 16px;">
-            <button type="submit">Загрузить и проверить код</button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      {% else %}
+        <div class="card">
+          <h2>Нет доступных задач</h2>
+          <p>Пользователь загружен, но по курсу <strong>{{ course }}</strong> пока нет назначенных задач.</p>
+        </div>
+      {% endif %}
     {% endif %}
   </div>
+  {% if has_problems %}
+    <script>
+      (() => {
+        const form = document.getElementById("solution-form");
+        const statusBox = document.getElementById("async-status");
+        const problemText = document.getElementById("problem-text");
+        const submitButton = document.getElementById("submit-solution-button");
+
+        if (!form || !statusBox || !problemText || !submitButton) {
+          return;
+        }
+
+        const setStatus = (message, kind) => {
+          statusBox.textContent = message;
+          statusBox.className = `message ${kind}`;
+          statusBox.classList.remove("hidden");
+        };
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          submitButton.disabled = true;
+          problemText.textContent = problemText.dataset.baseText || problemText.textContent;
+          setStatus("Идёт проверка решения...", "info");
+
+          try {
+            const requestUrl = `${window.location.pathname}${window.location.search}`;
+            const response = await fetch(requestUrl, {
+              method: "POST",
+              body: new FormData(form),
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+              },
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+              throw new Error(data.error || "Не удалось проверить решение.");
+            }
+
+            problemText.textContent = data.current_text;
+            setStatus(data.message || "Решение проверено.", "success");
+          } catch (error) {
+            setStatus(error.message || "Во время проверки произошла ошибка.", "error");
+          } finally {
+            submitButton.disabled = false;
+          }
+        });
+      })();
+    </script>
+  {% endif %}
 </body>
 </html>

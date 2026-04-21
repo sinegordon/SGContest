@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-python manage.py migrate
+python manage.py migrate --fake-initial
 
 python manage.py shell <<'PY'
 import os
