@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Django Contest Client</title>
+  <style>
+    :root {
+      --bg: #f4f1e8;
+      --panel: #fffdf8;
+      --ink: #1f1a17;
+      --accent: #a63d40;
+      --line: #d7cfc3;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: linear-gradient(180deg, #efe8dc 0%, var(--bg) 100%);
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 18px 45px rgba(71, 52, 34, 0.08);
+      margin-bottom: 18px;
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    input, select, button, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      background: white;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: 0;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #6b6b6b;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions form {
+      flex: 1 1 220px;
+    }
+    .messages {
+      margin-bottom: 16px;
+    }
+    .message {
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .message.success {
+      background: #e8f5e9;
+    }
+    .message.error {
+      background: #fdecea;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #fbf8f2;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 220px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Django Contest Client</h1>
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Настройки</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="load_user">
+        <div class="grid">
+          {% for field in settings_form %}
+            <div>
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div>{{ field.errors }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="actions" style="margin-top: 16px;">
+          <button type="submit">Загрузить пользователя</button>
+        </div>
+      </form>
+    </div>
+
+    {% if is_loaded %}
+      <div class="card">
+        <h2>Навигация</h2>
+        <p>Курс: <strong>{{ course }}</strong>. Всего задач: <strong>{{ problem_count }}</strong>.</p>
+        <div class="actions">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="select_problem">
+            <label for="{{ select_problem_form.problem_index.id_for_label }}">Тестовая задача</label>
+            {{ select_problem_form.problem_index }}
+            <button type="submit" style="margin-top: 12px;">Показать задачу</button>
+          </form>
+
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset">
+            <button type="submit" class="secondary">Сбросить сессию</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Задача №{{ current_problem_index }}</h2>
+        <pre>{{ current_text }}</pre>
+      </div>
+
+      <div class="card">
+        <h2>Проверка решения</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_solution">
+          <div class="grid">
+            <div>
+              <label for="{{ submit_solution_form.variant.id_for_label }}">Вариант</label>
+              <select name="variant" id="{{ submit_solution_form.variant.id_for_label }}">
+                {% for variant in variant_range %}
+                  <option value="{{ variant }}">{{ variant }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="language_display">Язык</label>
+              <input id="language_display" value="{{ language }}" disabled>
+            </div>
+            <div>
+              <label for="{{ submit_solution_form.code_file.id_for_label }}">Файл с решением</label>
+              {{ submit_solution_form.code_file }}
+            </div>
+          </div>
+          <div class="actions" style="margin-top: 16px;">
+            <button type="submit">Загрузить и проверить код</button>
+          </div>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

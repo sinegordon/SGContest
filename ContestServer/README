@@ -1,5 +1,11 @@
 CONTESTSERVER API
 
+Swagger / OpenAPI:
+
+- machine-readable spec: `ContestServer/openapi.yaml`
+- you can open it in Swagger Editor or any Swagger UI instance
+- the spec documents the JSON-RPC contract exposed through `POST /api/run`
+
 Сервер предоставляет один HTTP endpoint:
 
 - `POST /api/run`

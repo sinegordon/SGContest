@@ -1,0 +1,584 @@
+openapi: 3.1.0
+info:
+  title: SGContest ContestServer API
+  version: 1.0.0
+  description: |
+    OpenAPI description for the JSON-RPC style API exposed by `ContestServer`.
+
+    The server exposes a single HTTP endpoint, `POST /api/run`.
+    Different operations are selected by the `method` field inside the JSON body.
+
+    This specification was derived from the real request examples in `Test.ipynb`
+    and the current server implementation in `ContestServer/app.py` and `ContestServer/pool.py`.
+servers:
+  - url: http://localhost:57888
+    description: Local development server
+  - url: http://62.76.72.55:57888
+    description: Example deployed server from notebook samples
+tags:
+  - name: JSON-RPC
+    description: All methods are invoked through `POST /api/run`
+paths:
+  /api/run:
+    post:
+      tags:
+        - JSON-RPC
+      summary: Execute a ContestServer JSON-RPC method
+      description: |
+        Unified endpoint for all ContestServer operations.
+
+        Supported methods:
+        - `get_courses_data`
+        - `get_message_result`
+        - `add_message`
+        - `clear_data`
+        - `get_base_dump`
+        - `add_user_info`
+        - `get_user_info`
+        - `add_processor`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/GetCoursesDataRequest'
+                - $ref: '#/components/schemas/GetMessageResultRequest'
+                - $ref: '#/components/schemas/AddMessageGetDataRequest'
+                - $ref: '#/components/schemas/AddMessageAddProblemRequest'
+                - $ref: '#/components/schemas/AddMessageTestProblemRequest'
+                - $ref: '#/components/schemas/ClearDataRequest'
+                - $ref: '#/components/schemas/GetBaseDumpRequest'
+                - $ref: '#/components/schemas/AddUserInfoRequest'
+                - $ref: '#/components/schemas/GetUserInfoRequest'
+                - $ref: '#/components/schemas/AddProcessorRequest'
+            examples:
+              get_courses_data_courses:
+                summary: Get list of courses
+                value:
+                  jsonrpc: "2.0"
+                  id: "53b514de-b0ec-4b88-97f8-f624c06e1ec5"
+                  method: get_courses_data
+                  params:
+                    mqtt_key: "234"
+                    user: "2321"
+                    type: courses
+                    data_key: ""
+                    action: get_data
+              get_courses_data_problems:
+                summary: Get problems for a course
+                value:
+                  jsonrpc: "2.0"
+                  id: "8d490e62-07c5-4c28-a777-3976aa246aa4"
+                  method: get_courses_data
+                  params:
+                    mqtt_key: "234"
+                    user: "2321"
+                    type: problems
+                    data_key: "kate_test"
+                    action: get_data
+              add_message_get_data:
+                summary: Queue async get_data request
+                value:
+                  jsonrpc: "2.0"
+                  id: "f552b6cc-0c97-4809-a7dd-9f50ab10ca64"
+                  method: add_message
+                  params:
+                    mqtt_key: "234"
+                    user: "2321"
+                    type: problems
+                    data_key: "test"
+                    action: get_data
+              add_message_add_problem:
+                summary: Queue add_problem request
+                value:
+                  jsonrpc: "2.0"
+                  id: "1272efe3-b93f-44cf-95d8-1a68cb3a0f22"
+                  method: add_message
+                  params:
+                    mqtt_key: 123
+                    user: admin
+                    type: equal
+                    rating: 1
+                    course: kate_test
+                    problem: 90
+                    variant: "1"
+                    action: add_problem
+                    task: Введите строку, состоящую только из цифр...
+                    tests:
+                      "1":
+                        in: "12234457909"
+                        out: "5"
+                        score: 10
+              add_message_test_problem:
+                summary: Queue solution check
+                value:
+                  jsonrpc: "2.0"
+                  id: "20b93775-a52d-45d3-b390-0d4a6ba3b50c"
+                  method: add_message
+                  params:
+                    mqtt_key: "123"
+                    user: "alice"
+                    language: python
+                    course: kate_test
+                    action: test_problem
+                    problem: 1
+                    variant: "1"
+                    code: "print(int(input()) + 1)"
+              get_message_result:
+                summary: Poll async result by request id
+                value:
+                  jsonrpc: "2.0"
+                  id: "20b93775-a52d-45d3-b390-0d4a6ba3b50c"
+                  method: get_message_result
+                  params: {}
+              clear_data:
+                summary: Drop a course collection
+                value:
+                  jsonrpc: "2.0"
+                  id: "00dc5cd7-1d56-44dd-aa7a-1c4d845d5cb6"
+                  method: clear_data
+                  params:
+                    mqtt_key: "234"
+                    user: "2321"
+                    type: course
+                    data_key: kate_test
+                    action: clear_data
+              get_base_dump:
+                summary: Get processor message dump for a date
+                value:
+                  jsonrpc: "2.0"
+                  id: "dddc8da6-2587-4bbc-b9da-b1ec769ad57f"
+                  method: get_base_dump
+                  params:
+                    date: "2023-05-30"
+                    processor_name: equal_processor
+                    admin_key: e86e915a-249f-4fdc-a48a-7c3f9a0b36ff
+              add_user_info:
+                summary: Save user progress
+                value:
+                  jsonrpc: "2.0"
+                  id: "5334d56e-eb1a-490c-9f71-84916f507d76"
+                  method: add_user_info
+                  params:
+                    user_name: "123456"
+                    data:
+                      var:
+                        - 1
+                        - 2
+                        - 3
+              get_user_info:
+                summary: Get user progress
+                value:
+                  jsonrpc: "2.0"
+                  id: "c367f27e-71d3-4a9f-9270-3a57c639f4aa"
+                  method: get_user_info
+                  params:
+                    user_name: "*"
+      responses:
+        '200':
+          description: RPC result or RPC-level error payload
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/RpcSuccessResponse'
+                  - $ref: '#/components/schemas/RpcErrorResponse'
+              examples:
+                courses_result:
+                  summary: Successful get_courses_data response
+                  value:
+                    jsonrpc: "2.0"
+                    result:
+                      courses:
+                        - test
+                        - kate_test
+                    id: "53b514de-b0ec-4b88-97f8-f624c06e1ec5"
+                async_result:
+                  summary: Successful get_message_result response
+                  value:
+                    jsonrpc: "2.0"
+                    result:
+                      equal_processor:
+                        "1":
+                          score: 10
+                          test_out: "2"
+                          test_in: "1"
+                        success_count: 1
+                        res_score: 10
+                        max_res_score: 10
+                        timestamp: 1711111111
+                    id: "20b93775-a52d-45d3-b390-0d4a6ba3b50c"
+                rpc_error:
+                  summary: RPC error
+                  value:
+                    jsonrpc: "2.0"
+                    id: "20b93775-a52d-45d3-b390-0d4a6ba3b50c"
+                    error:
+                      code: -2
+                      message: Message ID not found in results
+        '500':
+          description: Unhandled server-side exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpcErrorResponse'
+components:
+  schemas:
+    RpcEnvelope:
+      type: object
+      required:
+        - jsonrpc
+        - id
+        - method
+        - params
+      properties:
+        jsonrpc:
+          type: string
+          const: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+            - type: 'null'
+        method:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+    RpcSuccessResponse:
+      type: object
+      required:
+        - jsonrpc
+        - id
+        - result
+      properties:
+        jsonrpc:
+          type: string
+          const: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+            - type: 'null'
+        result:
+          description: Method-specific result payload
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+            - type: string
+    RpcErrorResponse:
+      type: object
+      required:
+        - jsonrpc
+        - id
+        - error
+      properties:
+        jsonrpc:
+          type: string
+          const: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+            - type: 'null'
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: integer
+              description: |
+                Common observed codes:
+                - `-1` missing id
+                - `-2` async result not found
+                - `-3` invalid admin key
+                - `-4` user not found
+                - `-5` missing user_name
+                - `-6` missing data
+                - `-7` missing required params
+                - `-8` unsupported action
+                - `-9`, `-10`, `-12` processing/storage errors
+                - `-11` missing params
+                - `-21` missing/unknown method
+                - `-31` unhandled server error
+            message:
+              type: string
+    TestCase:
+      type: object
+      required:
+        - in
+        - out
+        - score
+      properties:
+        in:
+          type: string
+        out:
+          type: string
+        score:
+          type: integer
+        time:
+          type: integer
+          default: 10
+    GetDataParams:
+      type: object
+      required:
+        - mqtt_key
+        - user
+        - type
+        - data_key
+        - action
+      properties:
+        mqtt_key:
+          oneOf:
+            - type: string
+            - type: integer
+        user:
+          type: string
+        type:
+          type: string
+          enum:
+            - courses
+            - problems
+        data_key:
+          type: string
+        action:
+          type: string
+          const: get_data
+    GetCoursesDataRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: get_courses_data
+            params:
+              $ref: '#/components/schemas/GetDataParams'
+    GetMessageResultRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: get_message_result
+            params:
+              type: object
+              maxProperties: 0
+    AddMessageGetDataRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: add_message
+            params:
+              $ref: '#/components/schemas/GetDataParams'
+    AddProblemParams:
+      type: object
+      required:
+        - mqtt_key
+        - user
+        - type
+        - rating
+        - course
+        - problem
+        - variant
+        - action
+        - tests
+      properties:
+        mqtt_key:
+          oneOf:
+            - type: string
+            - type: integer
+        user:
+          type: string
+        type:
+          type: string
+          example: equal
+        rating:
+          type: integer
+        course:
+          type: string
+        problem:
+          type: integer
+        variant:
+          type: string
+        action:
+          type: string
+          const: add_problem
+        task:
+          type: string
+        tests:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TestCase'
+    AddMessageAddProblemRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: add_message
+            params:
+              $ref: '#/components/schemas/AddProblemParams'
+    TestProblemParams:
+      type: object
+      required:
+        - mqtt_key
+        - user
+        - language
+        - course
+        - action
+        - problem
+        - variant
+        - code
+      properties:
+        mqtt_key:
+          oneOf:
+            - type: string
+            - type: integer
+        user:
+          type: string
+        language:
+          type: string
+          enum:
+            - python
+            - c#
+            - c
+            - c++
+        course:
+          type: string
+        action:
+          type: string
+          const: test_problem
+        problem:
+          oneOf:
+            - type: string
+            - type: integer
+        variant:
+          type: string
+        code:
+          type: string
+    AddMessageTestProblemRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: add_message
+            params:
+              $ref: '#/components/schemas/TestProblemParams'
+    ClearDataParams:
+      type: object
+      required:
+        - mqtt_key
+        - user
+        - type
+        - data_key
+        - action
+      properties:
+        mqtt_key:
+          oneOf:
+            - type: string
+            - type: integer
+        user:
+          type: string
+        type:
+          type: string
+          enum:
+            - course
+            - problem
+        data_key:
+          type: string
+        action:
+          type: string
+          const: clear_data
+    ClearDataRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: clear_data
+            params:
+              $ref: '#/components/schemas/ClearDataParams'
+    GetBaseDumpParams:
+      type: object
+      required:
+        - date
+        - processor_name
+        - admin_key
+      properties:
+        date:
+          type: string
+          format: date
+        processor_name:
+          type: string
+        admin_key:
+          type: string
+    GetBaseDumpRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: get_base_dump
+            params:
+              $ref: '#/components/schemas/GetBaseDumpParams'
+    AddUserInfoParams:
+      type: object
+      required:
+        - user_name
+        - data
+      properties:
+        user_name:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+    AddUserInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: add_user_info
+            params:
+              $ref: '#/components/schemas/AddUserInfoParams'
+    GetUserInfoParams:
+      type: object
+      required:
+        - user_name
+      properties:
+        user_name:
+          type: string
+          description: Use `*` to fetch all users
+    GetUserInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: get_user_info
+            params:
+              $ref: '#/components/schemas/GetUserInfoParams'
+    AddProcessorParams:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    AddProcessorRequest:
+      allOf:
+        - $ref: '#/components/schemas/RpcEnvelope'
+        - type: object
+          properties:
+            method:
+              const: add_processor
+            params:
+              $ref: '#/components/schemas/AddProcessorParams'
