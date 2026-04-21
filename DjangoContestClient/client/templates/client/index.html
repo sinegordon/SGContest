@@ -97,6 +97,9 @@
 <body>
   <div class="wrap">
     <h1>Django Contest Client</h1>
+    {% if request.user.is_staff %}
+      <p><a href="{% url 'ops' %}">Открыть административный раздел</a></p>
+    {% endif %}
 
     {% if messages %}
       <div class="messages">

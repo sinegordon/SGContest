@@ -24,8 +24,8 @@ class ContestService:
     def get_courses_data(self, data_type, data_key):
         return self.course_repository.get_courses_data(data_type, data_key)
 
-    def clear_data(self, data_type, data_key):
-        return self.course_repository.clear_data(data_type, data_key)
+    def clear_data(self, data_type, data_key, problem_number=None):
+        return self.course_repository.clear_data(data_type, data_key, problem_number)
 
     def add_processor(self, name):
         self.worker_manager.add_processor(name)

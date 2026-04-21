@@ -83,8 +83,8 @@ class FakeService:
         self.calls.append(("get_courses_data", data_type, data_key))
         return self.courses_data
 
-    def clear_data(self, data_type, data_key):
-        self.calls.append(("clear_data", data_type, data_key))
+    def clear_data(self, data_type, data_key, problem_number=None):
+        self.calls.append(("clear_data", data_type, data_key, problem_number))
         return self.cleared_data
 
     def add_processor(self, name):
@@ -232,6 +232,27 @@ class WorkerPoolRefactorTests(unittest.TestCase):
             json.loads(resp),
             {"jsonrpc": "2.0", "result": {"course": "Droped!"}, "id": "1"},
         )
+
+    def test_clear_problem_success(self):
+        pool = self.make_pool()
+
+        resp = pool.clear_data(
+            "1",
+            {
+                "mqtt_key": "1",
+                "user": "alice",
+                "type": "problem",
+                "data_key": "python",
+                "problem": 7,
+                "action": "clear_data",
+            },
+        )
+
+        self.assertEqual(
+            json.loads(resp),
+            {"jsonrpc": "2.0", "result": {"course": "Droped!"}, "id": "1"},
+        )
+        self.assertEqual(pool.service.calls[0], ("clear_data", "problem", "python", 7))
 
     def test_add_processor_success(self):
         pool = self.make_pool()

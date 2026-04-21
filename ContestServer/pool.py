@@ -77,7 +77,11 @@ class WorkerPool:
             if message["action"] != "clear_data":
                 return rpc_error(request_id, -8, "No supported action!")
             try:
-                data = self.service.clear_data(message["type"], message["data_key"])
+                data = self.service.clear_data(
+                    message["type"],
+                    message["data_key"],
+                    message.get("problem"),
+                )
             except Exception as err:
                 print(f"Process error: {str(err)}")
                 return rpc_error(request_id, -12, str(err))

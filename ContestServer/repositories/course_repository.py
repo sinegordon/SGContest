@@ -33,12 +33,17 @@ class CourseRepository:
         print(f"Data - {result}")
         return result
 
-    def clear_data(self, data_type, data_key):
+    def clear_data(self, data_type, data_key, problem_number=None):
         data = {}
         if data_type == "course":
             print(f"Deleting course '{data_key}'")
             self.db_courses[data_key].drop()
             data[data_key] = "Droped!"
         elif data_type == "problem":
-            pass
+            if problem_number is None:
+                raise ValueError("Need problem number for deleting problem")
+            print(f"Deleting problem '{problem_number}' from course '{data_key}'")
+            collection = self.db_courses[data_key]
+            result = collection.delete_one({"problem": int(problem_number)})
+            data[str(problem_number)] = "Droped!" if result.deleted_count else "Not found"
         return data

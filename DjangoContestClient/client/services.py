@@ -1,4 +1,5 @@
 import random
+import json
 import time
 import uuid
 
@@ -66,6 +67,53 @@ class ContestApiClient:
             },
         )
 
+    def get_courses_catalog(self, user_name="admin"):
+        return self.call(
+            "get_courses_data",
+            {
+                "mqtt_key": "234",
+                "user": user_name,
+                "type": "courses",
+                "data_key": "",
+                "action": "get_data",
+            },
+        )
+
+    def clear_course(self, user_name, course):
+        return self.call(
+            "clear_data",
+            {
+                "mqtt_key": "234",
+                "user": user_name,
+                "type": "course",
+                "data_key": course,
+                "action": "clear_data",
+            },
+        )
+
+    def clear_problem(self, user_name, course, problem_number):
+        return self.call(
+            "clear_data",
+            {
+                "mqtt_key": "234",
+                "user": user_name,
+                "type": "problem",
+                "data_key": course,
+                "problem": int(problem_number),
+                "action": "clear_data",
+            },
+        )
+
+    def get_base_dump(self, date, processor_name, admin_key):
+        return self.call(
+            "get_base_dump",
+            {
+                "date": str(date),
+                "processor_name": processor_name,
+                "admin_key": admin_key,
+            },
+        )
+
     def add_message(self, params, request_id=None):
         return self.call("add_message", params, request_id=request_id)
 
@@ -80,6 +128,25 @@ class ContestApiClient:
             except ContestApiError:
                 time.sleep(interval)
         raise ContestApiError("Задача не была проверена за отведенное время. Попробуйте еще раз.")
+
+    def add_or_update_problem(self, user_name, course, problem_number, variant, problem_type, rating, task, tests):
+        request_id = str(uuid.uuid4())
+        self.add_message(
+            {
+                "mqtt_key": 123,
+                "user": user_name,
+                "type": problem_type,
+                "rating": int(rating),
+                "course": course,
+                "problem": int(problem_number),
+                "variant": str(variant),
+                "action": "add_problem",
+                "task": task,
+                "tests": tests,
+            },
+            request_id=request_id,
+        )
+        return self.poll_message_result(request_id)
 
 
 def get_problem_number(problem_data):
@@ -188,3 +255,61 @@ class ContestWebService:
         self.user_data[self.course][problem_index]["last_result"] = formatted
         self.api_client.add_user_info(self.user, self.user_data)
         return formatted
+
+
+def parse_tests_json(raw_json):
+    if not raw_json.strip():
+        raise ContestApiError("Заполните тесты через строки или JSON.")
+    try:
+        data = json.loads(raw_json)
+    except json.JSONDecodeError as err:
+        raise ContestApiError(f"Некорректный JSON тестов: {err}") from err
+    if not isinstance(data, dict):
+        raise ContestApiError("Тесты должны быть JSON-объектом.")
+    return data
+
+
+def parse_tests_text(raw_text):
+    if not raw_text.strip():
+        raise ContestApiError("Заполните тесты через строки или JSON.")
+
+    tests = {}
+    for line_number, raw_line in enumerate(raw_text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        parts = [part.strip() for part in line.split("|")]
+        if len(parts) not in (4, 5):
+            raise ContestApiError(
+                f"Строка теста {line_number} должна быть в формате: test_id | input | output | score | time(optional)"
+            )
+        test_id, test_in, test_out, score = parts[:4]
+        if not test_id:
+            raise ContestApiError(f"В строке {line_number} отсутствует test_id.")
+        test_data = {
+            "in": test_in,
+            "out": test_out,
+            "score": int(score),
+        }
+        if len(parts) == 5 and parts[4]:
+            test_data["time"] = int(parts[4])
+        tests[str(test_id)] = test_data
+    if not tests:
+        raise ContestApiError("Не удалось прочитать ни одного теста.")
+    return tests
+
+
+def parse_problem_tests(raw_text, raw_json):
+    if raw_json.strip():
+        return parse_tests_json(raw_json)
+    return parse_tests_text(raw_text)
+
+
+def parse_bulk_problems_json(raw_json):
+    try:
+        data = json.loads(raw_json)
+    except json.JSONDecodeError as err:
+        raise ContestApiError(f"Некорректный JSON файла задач: {err}") from err
+    if not isinstance(data, list):
+        raise ContestApiError("Файл задач должен содержать JSON-массив.")
+    return data

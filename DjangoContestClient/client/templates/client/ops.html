@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contest Ops</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: #fffdfa;
+      --ink: #1e1a16;
+      --accent: #28536b;
+      --warn: #a63d40;
+      --line: #d8d0c4;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: linear-gradient(180deg, #efe7da 0%, var(--bg) 100%);
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 18px 45px rgba(71, 52, 34, 0.08);
+      margin-bottom: 18px;
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    input, button, select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      background: white;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: 0;
+      cursor: pointer;
+    }
+    button.warn {
+      background: var(--warn);
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #fbf8f2;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      overflow: auto;
+    }
+    .nav {
+      margin-bottom: 16px;
+    }
+    .nav a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .message {
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .success {
+      background: #e8f5e9;
+    }
+    .error {
+      background: #fdecea;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a href="{% url 'index' %}">← Вернуться в клиент</a>
+    </div>
+
+    <h1>Contest Service Ops</h1>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card">
+      <h2>Подключение</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_ops_settings">
+        <div class="grid">
+          {% for field in settings_form %}
+            <div>
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 16px;">
+          <button type="submit">Сохранить настройки</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Быстрые действия</h2>
+      <div class="grid">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="list_courses">
+          <button type="submit">Показать курсы</button>
+        </form>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="list_users">
+          <button type="submit">Показать пользователей</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Работа с курсом</h2>
+      <div class="grid">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="show_problems">
+          <label for="{{ course_form.course.id_for_label }}">{{ course_form.course.label }}</label>
+          {{ course_form.course }}
+          <button type="submit" style="margin-top: 12px;">Показать задачи</button>
+        </form>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="clear_course">
+          <label for="clear_course_input">Курс</label>
+          <input id="clear_course_input" name="course" value="{{ course_form.course.value|default:'' }}">
+          <button type="submit" class="warn" style="margin-top: 12px;">Очистить курс</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Создание и обновление задачи</h2>
+      <p>Для быстрых правок можно использовать построчный формат тестов. JSON-режим остаётся доступен для сложных случаев.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_problem">
+        <div class="grid">
+          {% for field in problem_form %}
+            <div>
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <small>{{ field.help_text }}</small>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 16px;">
+          <button type="submit">Сохранить задачу</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Пакетная загрузка задач из JSON</h2>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="bulk_import">
+        <div class="grid">
+          {% for field in bulk_import_form %}
+            <div>
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 16px;">
+          <button type="submit">Импортировать набор задач</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Удаление задачи</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_problem">
+        <div class="grid">
+          {% for field in delete_problem_form %}
+            <div>
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 16px;">
+          <button type="submit" class="warn">Удалить задачу</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Дамп сообщений</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="get_dump">
+        <div class="grid">
+          {% for field in dump_form %}
+            <div>
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 16px;">
+          <button type="submit">Получить дамп</button>
+        </div>
+      </form>
+    </div>
+
+    {% if ops_results.courses is not None %}
+      <div class="card">
+        <h2>Курсы</h2>
+        <pre>{{ ops_results.courses }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.problems is not None %}
+      <div class="card">
+        <h2>Задачи курса</h2>
+        <pre>{{ ops_results.problems }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.users is not None %}
+      <div class="card">
+        <h2>Пользователи</h2>
+        <pre>{{ ops_results.users }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.dump is not None %}
+      <div class="card">
+        <h2>Дамп сообщений</h2>
+        <pre>{{ ops_results.dump }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.clear_result is not None %}
+      <div class="card">
+        <h2>Результат очистки</h2>
+        <pre>{{ ops_results.clear_result }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.problem_save_result is not None %}
+      <div class="card">
+        <h2>Результат сохранения задачи</h2>
+        <pre>{{ ops_results.problem_save_result }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.problem_delete_result is not None %}
+      <div class="card">
+        <h2>Результат удаления задачи</h2>
+        <pre>{{ ops_results.problem_delete_result }}</pre>
+      </div>
+    {% endif %}
+
+    {% if ops_results.bulk_import_result is not None %}
+      <div class="card">
+        <h2>Результат пакетного импорта</h2>
+        <pre>{{ ops_results.bulk_import_result }}</pre>
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>
