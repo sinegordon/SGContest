@@ -39,6 +39,7 @@ Swagger / OpenAPI:
 - `get_base_dump`
 - `clear_data`
 - `add_processor`
+- `create_course`
 
 Формат успешного ответа:
 
@@ -93,6 +94,13 @@ resp = requests.post("http://localhost:57888/api/run", json=message)
 print(resp.json())
 ```
 
+Поддерживаемые языки проверки для `test_problem`:
+
+- `python`
+- `c#`
+- `c`
+- `c++`
+
 Пример. Отправить асинхронную задачу:
 
 ```python
@@ -111,6 +119,49 @@ message = {
         "type": "problems",
         "data_key": "test",
         "action": "get_data"
+    }
+}
+
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
+
+Пример создания пустого курса:
+
+```python
+import requests
+import uuid
+
+message = {
+    "jsonrpc": "2.0",
+    "id": str(uuid.uuid4()),
+    "method": "create_course",
+    "params": {
+        "course": "test"
+    }
+}
+
+resp = requests.post("http://localhost:57888/api/run", json=message)
+print(resp.json())
+```
+
+Пример очистки одной задачи в курсе:
+
+```python
+import requests
+import uuid
+
+message = {
+    "jsonrpc": "2.0",
+    "id": str(uuid.uuid4()),
+    "method": "clear_data",
+    "params": {
+        "mqtt_key": "234",
+        "user": "admin",
+        "type": "problem",
+        "data_key": "test",
+        "problem": 90,
+        "action": "clear_data"
     }
 }
 
